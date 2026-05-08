@@ -15,8 +15,7 @@ class StartingState(BotState):
         # self._count = self._count + 1
 
         if self.detector.find(screen, "connect_server", 5, debug=self.bot.debug_mode):
-            x = 1100 + self.window.monitor_x
-            y = 795 + self.window.monitor_y
+            x, y = self.window.ref_to_screen(1100, 795)
 
             self.controller.move_to(x, y)
             time.sleep(0.5)

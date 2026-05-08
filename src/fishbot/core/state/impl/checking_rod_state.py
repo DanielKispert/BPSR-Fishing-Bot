@@ -30,8 +30,7 @@ class CheckingRodState(BotState):
             self.controller.press_key('m')
             time.sleep(1)
 
-            x = 1650 + self.window.monitor_x
-            y = 580 + self.window.monitor_y
+            x, y = self.window.ref_to_screen(1650, 580)
 
             self.controller.move_to(x, y)
             time.sleep(0.5)
