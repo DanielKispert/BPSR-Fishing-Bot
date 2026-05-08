@@ -84,7 +84,15 @@ class Detector:
 
         screenshot = self.sct.grab(self.monitor)
         img = np.array(screenshot)
-        return cv.cvtColor(img, cv.COLOR_BGRA2BGR)
+        img = cv.cvtColor(img, cv.COLOR_BGRA2BGR)
+
+        # Scale to reference resolution so ROIs and templates always match
+        ref_w = self.screen_config.REFERENCE_WIDTH
+        ref_h = self.screen_config.REFERENCE_HEIGHT
+        if img.shape[1] != ref_w or img.shape[0] != ref_h:
+            img = cv.resize(img, (ref_w, ref_h), interpolation=cv.INTER_LINEAR)
+
+        return img
 
     def _check_xy(self, search_area, x, y, template_data, template_img, template_name, debug):
         confidence, location = self._perform_match(search_area, template_data)
@@ -159,9 +167,17 @@ class Detector:
     def _calculate_center(self, location, template_shape, offset):
         h_t, w_t = template_shape
         offset_x, offset_y = offset
+
+        # Position in 1080p reference space (within the game window)
+        ref_x = location[0] + w_t // 2 + offset_x
+        ref_y = location[1] + h_t // 2 + offset_y
+
+        # Scale back to actual window size, then add window position
+        scale_x = self.screen_config.monitor_width / self.screen_config.REFERENCE_WIDTH
+        scale_y = self.screen_config.monitor_height / self.screen_config.REFERENCE_HEIGHT
         return (
-            location[0] + w_t // 2 + offset_x + self.screen_config.monitor_x,
-            location[1] + h_t // 2 + offset_y + self.screen_config.monitor_y
+            int(ref_x * scale_x) + self.screen_config.monitor_x,
+            int(ref_y * scale_y) + self.screen_config.monitor_y
         )
 
     def find(self, screen, template_name, radius = 0, debug=False):
