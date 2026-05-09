@@ -30,6 +30,7 @@ pip-wheel-metadata/
 
 # Log files
 *.log
+logs/
 
 # OS-generated files
 .DS_Store
