@@ -1,5 +1,7 @@
 import cv2 as cv
 import numpy as np
+import time
+from pathlib import Path
 
 from src.fishbot.utils.logger import log
 
@@ -14,6 +16,9 @@ except ImportError:
 class Detector:
     REFERENCE_WIDTH = 1920
     REFERENCE_HEIGHT = 1080
+
+    # Scales to try for multi-scale template matching
+    MATCH_SCALES = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0]
 
     def __init__(self, config):
         self.unified_config = config
@@ -34,6 +39,15 @@ class Detector:
         self._scale_y = None
         self._actual_width = None
         self._actual_height = None
+
+        # Cache: once a template matches at a certain scale, prioritize it
+        self._scale_cache = {}
+
+        # Screenshot capture for debugging
+        self._last_screenshot_time = 0
+        self._screenshot_dir = Path(__file__).resolve().parent.parent.parent.parent / "logs" / "screenshots"
+        self._screenshot_dir.mkdir(parents=True, exist_ok=True)
+        self._max_screenshots = 30
 
     def _load_templates(self):
         loaded = {}
@@ -81,59 +95,103 @@ class Detector:
                 log(f"[INFO] ⚠️ DPI mismatch detected! pywinctl={self.screen_config.monitor_width}x{self.screen_config.monitor_height}, "
                     f"actual capture={self._actual_width}x{self._actual_height}")
 
+        # Save debug screenshot once per second (scaled to reference resolution)
+        now = time.time()
+        if now - self._last_screenshot_time >= 1.0:
+            self._last_screenshot_time = now
+            self._save_debug_screenshot(img)
+
         return img
 
-    def _scale_roi(self, roi):
-        """Scale a reference ROI (x, y, w, h) to actual capture coordinates."""
-        x, y, w, h = roi
-        return (
-            int(x * self._scale_x),
-            int(y * self._scale_y),
-            int(w * self._scale_x),
-            int(h * self._scale_y),
-        )
+    def _save_debug_screenshot(self, img):
+        """Save a screenshot scaled to 1920x1080 for offline debugging."""
+        try:
+            ref_img = cv.resize(img, (self.REFERENCE_WIDTH, self.REFERENCE_HEIGHT), interpolation=cv.INTER_AREA)
+            timestamp = time.strftime("%H%M%S")
+            filepath = self._screenshot_dir / f"frame_{timestamp}.png"
+            cv.imwrite(str(filepath), ref_img)
 
-    def _perform_match(self, search_area, template_data):
+            # Rolling buffer: delete oldest files if over limit
+            files = sorted(self._screenshot_dir.glob("frame_*.png"))
+            while len(files) > self._max_screenshots:
+                files[0].unlink()
+                files.pop(0)
+        except Exception as e:
+            log(f"[DEBUG] Screenshot save failed: {e}")
+
+    def _get_scales_for_template(self, template_name):
+        """Get scales to try, prioritizing cached successful scale."""
+        if template_name in self._scale_cache:
+            cached = self._scale_cache[template_name]
+            # Try cached scale first, then close neighbors, then all others
+            priority = [cached]
+            for s in self.MATCH_SCALES:
+                if abs(s - cached) <= 0.15 and s != cached:
+                    priority.append(s)
+            for s in self.MATCH_SCALES:
+                if s not in priority:
+                    priority.append(s)
+            return priority
+        return self.MATCH_SCALES
+
+    def _perform_match_multiscale(self, search_area, template_data, template_name):
+        """Try matching template at multiple scales. Returns (confidence, location, scale)."""
         template_img, mask = template_data
-
         search_gray = cv.cvtColor(search_area, cv.COLOR_BGR2GRAY)
-        template_gray = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
 
-        if search_gray.shape[0] < template_gray.shape[0] or search_gray.shape[1] < template_gray.shape[1]:
-            return None, None
+        best_confidence = 0
+        best_location = None
+        best_scale = 1.0
 
-        result = cv.matchTemplate(search_gray, template_gray, cv.TM_CCOEFF_NORMED, mask=mask)
-        _, confidence, _, location = cv.minMaxLoc(result)
-        return confidence, location
+        scales = self._get_scales_for_template(template_name)
 
-    def _calculate_center(self, location, template_shape, ref_roi):
-        """Calculate the click position in actual screen coordinates.
-        
-        location: match position within the (resized-to-reference) search area
-        template_shape: (h, w) of the template
-        ref_roi: the original reference ROI (x, y, w, h) in 1920x1080 space
-        """
-        h_t, w_t = template_shape
-        ref_x, ref_y = ref_roi[0], ref_roi[1]
+        for scale in scales:
+            new_w = max(1, int(template_img.shape[1] * scale))
+            new_h = max(1, int(template_img.shape[0] * scale))
 
-        # Position in 1080p reference space (within the game window)
-        pos_ref_x = ref_x + location[0] + w_t // 2
-        pos_ref_y = ref_y + location[1] + h_t // 2
+            if search_gray.shape[0] < new_h or search_gray.shape[1] < new_w:
+                continue
 
-        # Scale to actual capture pixels, then add window offset
-        # Use actual capture dimensions for scaling (handles DPI mismatch)
-        actual_scale_x = self._actual_width / self.REFERENCE_WIDTH
-        actual_scale_y = self._actual_height / self.REFERENCE_HEIGHT
-        
-        # But for click coordinates we need screen coordinates (logical pixels)
-        # The controller uses screen coordinates, so we scale by screen_config dimensions
-        screen_scale_x = self.screen_config.monitor_width / self.REFERENCE_WIDTH
-        screen_scale_y = self.screen_config.monitor_height / self.REFERENCE_HEIGHT
+            interp = cv.INTER_AREA if scale < 1 else cv.INTER_LINEAR
+            scaled_template_gray = cv.resize(
+                cv.cvtColor(template_img, cv.COLOR_BGR2GRAY),
+                (new_w, new_h), interpolation=interp
+            )
 
-        return (
-            int(pos_ref_x * screen_scale_x) + self.screen_config.monitor_x,
-            int(pos_ref_y * screen_scale_y) + self.screen_config.monitor_y
-        )
+            scaled_mask = None
+            if mask is not None:
+                scaled_mask = cv.resize(mask, (new_w, new_h), interpolation=interp)
+
+            try:
+                result = cv.matchTemplate(search_gray, scaled_template_gray, cv.TM_CCOEFF_NORMED, mask=scaled_mask)
+                _, confidence, _, location = cv.minMaxLoc(result)
+            except cv.error:
+                continue
+
+            if confidence > best_confidence:
+                best_confidence = confidence
+                best_location = location
+                best_scale = scale
+
+                # Early exit if we found a very good match
+                if confidence >= 0.85:
+                    break
+
+        return best_confidence, best_location, best_scale
+
+    def _calculate_center_native(self, location, scaled_template_shape, nat_offset_x, nat_offset_y):
+        """Calculate click position from a match found in native pixel space."""
+        scaled_h, scaled_w = scaled_template_shape
+
+        # Center of match in native capture pixels
+        center_nat_x = nat_offset_x + location[0] + scaled_w // 2
+        center_nat_y = nat_offset_y + location[1] + scaled_h // 2
+
+        # Convert from capture pixels to screen (logical) pixels
+        screen_x = int(center_nat_x / self._actual_width * self.screen_config.monitor_width) + self.screen_config.monitor_x
+        screen_y = int(center_nat_y / self._actual_height * self.screen_config.monitor_height) + self.screen_config.monitor_y
+
+        return (screen_x, screen_y)
 
     def find(self, screen, template_name, radius=0, debug=False):
         if template_name not in self.templates:
@@ -144,7 +202,6 @@ class Detector:
             return None
 
         template_data = self.templates[template_name]
-        template_img, _ = template_data
 
         # Get the ROI config (in reference 1920x1080 coordinates)
         roi_config = self.detection_config.rois.get(template_name)
@@ -152,57 +209,67 @@ class Detector:
             roi_config = self.detection_config.rois.get(roi_config)
 
         if not roi_config:
-            # No ROI defined: search full screen (expensive)
-            # Resize full screen to reference size for matching
-            ref_frame = cv.resize(screen, (self.REFERENCE_WIDTH, self.REFERENCE_HEIGHT),
-                                  interpolation=cv.INTER_AREA)
-            confidence, location = self._perform_match(ref_frame, template_data)
-            if confidence is not None and confidence >= self.detection_config.precision:
-                if debug:
-                    log(f"[DEBUG] [{template_name}] Full-screen match confidence: {confidence:.2%}")
-                return self._calculate_center(location, template_img.shape[:2], (0, 0, self.REFERENCE_WIDTH, self.REFERENCE_HEIGHT))
-            return None
+            # No ROI: search full screen with multi-scale
+            return self._search_full_screen(screen, template_name, template_data, debug)
 
-        ref_roi = roi_config  # (x, y, w, h) in 1920x1080 space
+        ref_roi = roi_config
 
-        # Try matching at the primary ROI position and concentric offsets
-        result = self._try_match_at_roi(screen, template_name, template_data, template_img, ref_roi, debug)
+        # Try matching at the primary ROI position
+        result = self._try_match_at_roi(screen, template_name, template_data, ref_roi, debug)
         if result is not None:
             return result
 
         # Concentric search around the ROI (shifted positions)
         if radius > 0:
             ref_x, ref_y, ref_w, ref_h = ref_roi
-            step = max(1, int(5 * self._scale_x))  # Step size in native pixels, scaled from ~5px at 1080p
-            
             for r in range(1, radius + 1):
-                offsets = []
-                offset_ref = r * 5  # 5 reference pixels per radius step
-                # 4 cardinal directions
-                offsets.append((ref_x + offset_ref, ref_y, ref_w, ref_h))
-                offsets.append((ref_x - offset_ref, ref_y, ref_w, ref_h))
-                offsets.append((ref_x, ref_y + offset_ref, ref_w, ref_h))
-                offsets.append((ref_x, ref_y - offset_ref, ref_w, ref_h))
-                # 4 diagonal directions
-                offsets.append((ref_x + offset_ref, ref_y + offset_ref, ref_w, ref_h))
-                offsets.append((ref_x - offset_ref, ref_y + offset_ref, ref_w, ref_h))
-                offsets.append((ref_x + offset_ref, ref_y - offset_ref, ref_w, ref_h))
-                offsets.append((ref_x - offset_ref, ref_y - offset_ref, ref_w, ref_h))
-
+                offset_ref = r * 5
+                offsets = [
+                    (ref_x + offset_ref, ref_y, ref_w, ref_h),
+                    (ref_x - offset_ref, ref_y, ref_w, ref_h),
+                    (ref_x, ref_y + offset_ref, ref_w, ref_h),
+                    (ref_x, ref_y - offset_ref, ref_w, ref_h),
+                    (ref_x + offset_ref, ref_y + offset_ref, ref_w, ref_h),
+                    (ref_x - offset_ref, ref_y + offset_ref, ref_w, ref_h),
+                    (ref_x + offset_ref, ref_y - offset_ref, ref_w, ref_h),
+                    (ref_x - offset_ref, ref_y - offset_ref, ref_w, ref_h),
+                ]
                 for shifted_roi in offsets:
-                    result = self._try_match_at_roi(screen, template_name, template_data, template_img, shifted_roi, debug)
+                    result = self._try_match_at_roi(screen, template_name, template_data, shifted_roi, debug=False)
                     if result is not None:
                         return result
 
         return None
 
-    def _try_match_at_roi(self, screen, template_name, template_data, template_img, ref_roi, debug):
-        """Try to match a template within a specific ROI.
-        
+    def _search_full_screen(self, screen, template_name, template_data, debug):
+        """Search the full screen with multi-scale matching."""
+        confidence, location, scale = self._perform_match_multiscale(screen, template_data, template_name)
+
+        if confidence is None or location is None:
+            return None
+
+        precision = self.detection_config.precision
+        is_match = confidence >= precision
+
+        if debug:
+            status = 'MATCH' if is_match else 'NO MATCH'
+            log(f"[DEBUG] [{template_name}] Full-screen confidence: {confidence:.2%} @ scale {scale:.2f} (required: {precision:.0%}) -> {status}")
+
+        if is_match:
+            self._scale_cache[template_name] = scale
+            template_img, _ = template_data
+            scaled_w = int(template_img.shape[1] * scale)
+            scaled_h = int(template_img.shape[0] * scale)
+            return self._calculate_center_native(location, (scaled_h, scaled_w), 0, 0)
+
+        return None
+
+    def _try_match_at_roi(self, screen, template_name, template_data, ref_roi, debug):
+        """Try to match a template within a specific ROI using multi-scale matching.
+
         1. Scale ROI to native capture coordinates
         2. Crop from native screenshot
-        3. Resize crop to reference ROI size (INTER_AREA)
-        4. Match against original template
+        3. Multi-scale match template against native crop
         """
         ref_x, ref_y, ref_w, ref_h = ref_roi
 
@@ -225,25 +292,24 @@ class Detector:
         # Crop at native resolution
         crop = screen[nat_y:nat_y + nat_h, nat_x:nat_x + nat_w]
 
-        # Resize crop to reference ROI size using INTER_AREA (optimal for downscaling)
-        if crop.shape[1] != ref_w or crop.shape[0] != ref_h:
-            interpolation = cv.INTER_AREA if (crop.shape[1] > ref_w) else cv.INTER_LINEAR
-            crop = cv.resize(crop, (ref_w, ref_h), interpolation=interpolation)
+        # Multi-scale matching against native crop
+        confidence, location, scale = self._perform_match_multiscale(crop, template_data, template_name)
 
-        # Match template against the reference-sized crop
-        confidence, location = self._perform_match(crop, template_data)
-
-        if confidence is None:
+        if confidence is None or location is None:
             return None
 
         precision = self.detection_config.precision
         is_match = confidence >= precision
 
-        if debug and confidence >= 0.3:
+        if debug:
             status = 'MATCH' if is_match else 'NO MATCH'
-            log(f"[DEBUG] [{template_name}] Confidence: {confidence:.2%} (required: {precision:.0%}) -> {status}")
+            log(f"[DEBUG] [{template_name}] Confidence: {confidence:.2%} @ scale {scale:.2f} (required: {precision:.0%}) -> {status}")
 
         if is_match:
-            return self._calculate_center(location, template_img.shape[:2], ref_roi)
+            self._scale_cache[template_name] = scale
+            template_img, _ = template_data
+            scaled_w = int(template_img.shape[1] * scale)
+            scaled_h = int(template_img.shape[0] * scale)
+            return self._calculate_center_native(location, (scaled_h, scaled_w), nat_x, nat_y)
 
         return None
