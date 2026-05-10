@@ -43,15 +43,22 @@ class StateMachine:
         elapsed_time = time.time() - self.state_start_time
         if elapsed_time > timeout_limit:
             log(f"[TIMEOUT] 🚨 State '{self.current_state_name.name}' exceeded {timeout_limit}s!")
-            log("[TIMEOUT] 🚨 Releasing controls and pressing 'ESC' to reset.")
 
             self.bot.detector.save_timeout_frame(self.bot.detector.capture_screen(), self.current_state_name.name)
             self.bot.controller.release_all_controls()
-            self.bot.controller.press_key('esc')
-            time.sleep(0.5)
-
             self.bot.stats.increment('timeouts')
-            self.set_state(StateType.STARTING, force=True)
+
+            # If we're in the minigame, stay in fishing UI (don't press ESC)
+            if self.current_state_name == StateType.PLAYING_MINIGAME:
+                log("[TIMEOUT] 🔄 Staying in fishing UI, going to CHECKING_ROD.")
+                time.sleep(2)
+                self.set_state(StateType.CHECKING_ROD, force=True)
+            else:
+                log("[TIMEOUT] 🚨 Pressing 'ESC' to reset.")
+                self.bot.controller.press_key('esc')
+                time.sleep(0.5)
+                self.set_state(StateType.STARTING, force=True)
+
             return True
         return False
 
