@@ -3,7 +3,7 @@ from .paths import TEMPLATES_PATH
 class DetectionConfig:
     def __init__(self):
 
-        self.precision = 0.65
+        self.precision = 0.50
 
         self.templates_path = str(TEMPLATES_PATH)
 

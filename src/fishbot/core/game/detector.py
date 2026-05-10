@@ -17,8 +17,8 @@ class Detector:
     REFERENCE_WIDTH = 1920
     REFERENCE_HEIGHT = 1080
 
-    # Scales to try for multi-scale template matching
-    MATCH_SCALES = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0]
+    # Base scales - the dynamic reciprocal scale is added after first capture
+    MATCH_SCALES_BASE = [0.8, 1.0, 1.2, 1.6]
 
     def __init__(self, config):
         self.unified_config = config
@@ -42,12 +42,14 @@ class Detector:
 
         # Cache: once a template matches at a certain scale, prioritize it
         self._scale_cache = {}
+        self._match_scales = list(self.MATCH_SCALES_BASE)
 
-        # Screenshot capture for debugging
+        # Screenshot capture for debugging - use CWD-relative path for portability
         self._last_screenshot_time = 0
-        self._screenshot_dir = Path(__file__).resolve().parent.parent.parent.parent / "logs" / "screenshots"
+        self._screenshot_dir = Path.cwd() / "logs" / "screenshots"
         self._screenshot_dir.mkdir(parents=True, exist_ok=True)
-        self._max_screenshots = 30
+        self._max_screenshots = 60
+        log(f"[INFO] 📸 Screenshots will be saved to: {self._screenshot_dir}")
 
     def _load_templates(self):
         loaded = {}
@@ -95,6 +97,12 @@ class Detector:
                 log(f"[INFO] ⚠️ DPI mismatch detected! pywinctl={self.screen_config.monitor_width}x{self.screen_config.monitor_height}, "
                     f"actual capture={self._actual_width}x{self._actual_height}")
 
+            # Add dynamic scale: reciprocal of capture scale (for games where UI doesn't scale)
+            reciprocal = round(1.0 / self._scale_x, 2)
+            if reciprocal not in self._match_scales:
+                self._match_scales.insert(0, reciprocal)  # Highest priority
+            log(f"[INFO] 📐 Match scales: {self._match_scales}")
+
         # Save debug screenshot once per second (scaled to reference resolution)
         now = time.time()
         if now - self._last_screenshot_time >= 1.0:
@@ -109,7 +117,11 @@ class Detector:
             ref_img = cv.resize(img, (self.REFERENCE_WIDTH, self.REFERENCE_HEIGHT), interpolation=cv.INTER_AREA)
             timestamp = time.strftime("%H%M%S")
             filepath = self._screenshot_dir / f"frame_{timestamp}.png"
-            cv.imwrite(str(filepath), ref_img)
+            success = cv.imwrite(str(filepath), ref_img)
+            if success:
+                log(f"[DEBUG] 📸 Saved: {filepath}")
+            else:
+                log(f"[ERROR] 📸 cv.imwrite returned False for: {filepath}")
 
             # Rolling buffer: delete oldest files if over limit
             files = sorted(self._screenshot_dir.glob("frame_*.png"))
@@ -117,7 +129,18 @@ class Detector:
                 files[0].unlink()
                 files.pop(0)
         except Exception as e:
-            log(f"[DEBUG] Screenshot save failed: {e}")
+            log(f"[ERROR] 📸 Screenshot save failed: {type(e).__name__}: {e}")
+
+    def save_timeout_frame(self, screen, state_name):
+        """Save current frame when a state times out - critical for debugging."""
+        try:
+            ref_img = cv.resize(screen, (self.REFERENCE_WIDTH, self.REFERENCE_HEIGHT), interpolation=cv.INTER_AREA)
+            timestamp = time.strftime("%H%M%S")
+            filepath = self._screenshot_dir / f"timeout_{state_name}_{timestamp}.png"
+            cv.imwrite(str(filepath), ref_img)
+            log(f"[INFO] 📸 Timeout frame saved: {filepath.name}")
+        except Exception as e:
+            log(f"[ERROR] Timeout frame save failed: {e}")
 
     def _get_scales_for_template(self, template_name):
         """Get scales to try, prioritizing cached successful scale."""
@@ -125,14 +148,14 @@ class Detector:
             cached = self._scale_cache[template_name]
             # Try cached scale first, then close neighbors, then all others
             priority = [cached]
-            for s in self.MATCH_SCALES:
+            for s in self._match_scales:
                 if abs(s - cached) <= 0.15 and s != cached:
                     priority.append(s)
-            for s in self.MATCH_SCALES:
+            for s in self._match_scales:
                 if s not in priority:
                     priority.append(s)
             return priority
-        return self.MATCH_SCALES
+        return self._match_scales
 
     def _perform_match_multiscale(self, search_area, template_data, template_name):
         """Try matching template at multiple scales. Returns (confidence, location, scale)."""
@@ -173,8 +196,8 @@ class Detector:
                 best_location = location
                 best_scale = scale
 
-                # Early exit if we found a very good match
-                if confidence >= 0.85:
+                # Early exit if we found a good match
+                if confidence >= 0.70:
                     break
 
         return best_confidence, best_location, best_scale

@@ -45,6 +45,7 @@ class StateMachine:
             log(f"[TIMEOUT] 🚨 State '{self.current_state_name.name}' exceeded {timeout_limit}s!")
             log("[TIMEOUT] 🚨 Releasing controls and pressing 'ESC' to reset.")
 
+            self.bot.detector.save_timeout_frame(self.bot.detector.capture_screen(), self.current_state_name.name)
             self.bot.controller.release_all_controls()
             self.bot.controller.press_key('esc')
             time.sleep(0.5)
