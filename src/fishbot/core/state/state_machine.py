@@ -35,6 +35,12 @@ class StateMachine:
         self.current_state = self.states[self.current_state_name]
         self.state_start_time = time.time()
 
+        # Adjust screenshot frequency: faster during minigame for debugging
+        if new_state_name == StateType.PLAYING_MINIGAME:
+            self.bot.detector.screenshot_interval = 0.5
+        else:
+            self.bot.detector.screenshot_interval = 2.0
+
     def _check_state_timeout(self):
         timeout_limit = self.config.state_timeouts.get(self.current_state_name.name)
         if not timeout_limit:

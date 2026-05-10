@@ -50,6 +50,7 @@ class Detector:
         self._screenshot_dir.mkdir(parents=True, exist_ok=True)
         self._max_screenshots = 60
         self.screenshots_enabled = False  # Toggled via hotkey '6'
+        self.screenshot_interval = 1.0  # Seconds between debug screenshots (adjusted per state)
         log(f"[INFO] 📸 Screenshots will be saved to: {self._screenshot_dir}")
 
     def _load_templates(self):
@@ -107,7 +108,7 @@ class Detector:
         # Save debug screenshot once per second (only when debug mode is active)
         if self.screenshots_enabled:
             now = time.time()
-            if now - self._last_screenshot_time >= 1.0:
+            if now - self._last_screenshot_time >= self.screenshot_interval:
                 self._last_screenshot_time = now
                 self._save_debug_screenshot(img)
 
