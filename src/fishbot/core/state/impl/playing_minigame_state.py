@@ -34,7 +34,11 @@ class PlayingMinigameState(BotState):
                 time.sleep(self.switch_delay)
 
     def _detect_fishing_idle(self, screen):
-        """Check if the fishing idle UI is visible (any rod template matches)."""
+        """Check if the fishing idle UI is visible.
+        Uses level_check (always present in fishing HUD) as primary indicator,
+        with rod templates as secondary confirmation."""
+        if self.detector.find(screen, "level_check", 5):
+            return True
         for rod in ["flex_rod", "sturdy_rod", "reg_rod"]:
             if self.detector.find(screen, rod, 5):
                 return True
