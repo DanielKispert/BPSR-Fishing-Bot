@@ -49,6 +49,7 @@ class Detector:
         self._screenshot_dir = Path.cwd() / "logs" / "screenshots"
         self._screenshot_dir.mkdir(parents=True, exist_ok=True)
         self._max_screenshots = 60
+        self.screenshots_enabled = False  # Toggled via hotkey '6'
         log(f"[INFO] 📸 Screenshots will be saved to: {self._screenshot_dir}")
 
     def _load_templates(self):
@@ -103,11 +104,12 @@ class Detector:
                 self._match_scales.insert(0, reciprocal)  # Highest priority
             log(f"[INFO] 📐 Match scales: {self._match_scales}")
 
-        # Save debug screenshot once per second (scaled to reference resolution)
-        now = time.time()
-        if now - self._last_screenshot_time >= 1.0:
-            self._last_screenshot_time = now
-            self._save_debug_screenshot(img)
+        # Save debug screenshot once per second (only when debug mode is active)
+        if self.screenshots_enabled:
+            now = time.time()
+            if now - self._last_screenshot_time >= 1.0:
+                self._last_screenshot_time = now
+                self._save_debug_screenshot(img)
 
         return img
 

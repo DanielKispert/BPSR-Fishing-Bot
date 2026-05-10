@@ -11,15 +11,31 @@ class Hotkeys:
         self._register_hotkeys()
 
     def _register_hotkeys(self):
-        keyboard.add_hotkey('7', self._toggle_pause)
+        keyboard.add_hotkey('6', self._start_debug)
+        keyboard.add_hotkey('7', self._start_normal)
         keyboard.add_hotkey('8', self._stop)
         keyboard.add_hotkey('9', self._toggle_visualizer)
-        log("[INFO] ✅ Hotkeys registered: '7' (Pause/Resume), '8' (Exit), '9' (ROI Visualizer)")
+        log("[INFO] ✅ Hotkeys registered: '6' (Start+Debug), '7' (Start), '8' (Exit), '9' (ROI Visualizer)")
 
-    def _toggle_pause(self):
-        self.paused = not self.paused
-        status = "PAUSED" if self.paused else "RUNNING"
-        log(f"[HOTKEY] Bot {status}.")
+    def _start_debug(self):
+        if self.paused:
+            self.bot.debug_mode = True
+            self.bot.detector.screenshots_enabled = True
+            self.paused = False
+            log("[HOTKEY] 🐛 Bot RUNNING (DEBUG MODE - screenshots enabled)")
+        else:
+            self.paused = True
+            log("[HOTKEY] Bot PAUSED.")
+
+    def _start_normal(self):
+        if self.paused:
+            self.bot.debug_mode = False
+            self.bot.detector.screenshots_enabled = False
+            self.paused = False
+            log("[HOTKEY] Bot RUNNING.")
+        else:
+            self.paused = True
+            log("[HOTKEY] Bot PAUSED.")
 
     def _stop(self):
         log("[HOTKEY] Stopping the bot...")
@@ -34,7 +50,6 @@ class Hotkeys:
             self.visualizer_process = None
         else:
             log("[HOTKEY] Opening the ROI visualizer.")
-            # Runs the visualizer in a separate process so it doesn’t block the main UI
             self.visualizer_process = multiprocessing.Process(target=show_roi_visualizer, daemon=True)
             self.visualizer_process.start()
 

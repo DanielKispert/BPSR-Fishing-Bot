@@ -11,7 +11,7 @@ def main():
 
     bot.start()
 
-    log("[INFO] Press '7' to start the bot.")
+    log("[INFO] Press '7' to start, or '6' to start with debug (screenshots).")
 
     while not bot.is_stopped():
         if not hotkeys.paused:
