@@ -12,6 +12,9 @@ except ImportError:
 
 
 class Detector:
+    REFERENCE_WIDTH = 1920
+    REFERENCE_HEIGHT = 1080
+
     def __init__(self, config):
         self.unified_config = config
         self.detection_config = config.bot.detection
@@ -25,6 +28,12 @@ class Detector:
             'width': self.screen_config.monitor_width,
             'height': self.screen_config.monitor_height
         }
+
+        # Scale factors computed on first capture (actual pixels vs reference)
+        self._scale_x = None
+        self._scale_y = None
+        self._actual_width = None
+        self._actual_height = None
 
     def _load_templates(self):
         loaded = {}
@@ -45,37 +54,9 @@ class Detector:
             else:
                 log(f"[INFO] ✅ {name}")
                 template_img = img
-            
+
             loaded[name] = (template_img, mask)
         return loaded
-    
-    def _generate_concentric_square_pixels(self, center_x, center_y, max_radius):
-        """
-        Generates x, y pixel coordinates for the perimeters of concentric squares.
-
-        Args:
-            center_x (int): The x-coordinate of the center.
-            center_y (int): The y-coordinate of the center.
-            max_radius (int): The radius of the largest square from the center.
-
-        Yields:
-            tuple: (x, y) coordinates for each pixel on the squares.
-        """
-        # Iterate for each square size, starting from a small radius up to max_radius
-        for r in range(1, max_radius + 1):
-            # Coordinates for the four sides of the square
-            # Top side: x from center_x-r to center_x+r, y fixed at center_y-r
-            for x in range(center_x - r, center_x + r + 1):
-                yield x, center_y - r
-            # Bottom side: x from center_x-r to center_x+r, y fixed at center_y+r
-            for x in range(center_x - r, center_x + r + 1):
-                yield x, center_y + r
-            # Left side: x fixed at center_x-r, y from center_y-r+1 to center_y+r-1
-            for y in range(center_y - r + 1, center_y + r):
-                yield center_x - r, y
-            # Right side: x fixed at center_x+r, y from center_y-r+1 to center_y+r-1
-            for y in range(center_y - r + 1, center_y + r):
-                yield center_x + r, y
 
     def capture_screen(self):
         if self.sct is None:
@@ -86,70 +67,31 @@ class Detector:
         img = np.array(screenshot)
         img = cv.cvtColor(img, cv.COLOR_BGRA2BGR)
 
-        # Scale to reference resolution so ROIs and templates always match
-        ref_w = self.screen_config.REFERENCE_WIDTH
-        ref_h = self.screen_config.REFERENCE_HEIGHT
-        if img.shape[1] != ref_w or img.shape[0] != ref_h:
-            img = cv.resize(img, (ref_w, ref_h), interpolation=cv.INTER_LINEAR)
+        # Lazy-init: detect actual capture resolution on first frame
+        if self._scale_x is None:
+            self._actual_width = img.shape[1]
+            self._actual_height = img.shape[0]
+            self._scale_x = self._actual_width / self.REFERENCE_WIDTH
+            self._scale_y = self._actual_height / self.REFERENCE_HEIGHT
+
+            log(f"[INFO] 📐 Capture resolution: {self._actual_width}x{self._actual_height}")
+            log(f"[INFO] 📐 Scale factors: x={self._scale_x:.3f}, y={self._scale_y:.3f}")
+
+            if self._actual_width != self.screen_config.monitor_width:
+                log(f"[INFO] ⚠️ DPI mismatch detected! pywinctl={self.screen_config.monitor_width}x{self.screen_config.monitor_height}, "
+                    f"actual capture={self._actual_width}x{self._actual_height}")
 
         return img
 
-    def _check_xy(self, search_area, x, y, template_data, template_img, template_name, debug):
-        confidence, location = self._perform_match(search_area, template_data)
-
-        if confidence is None:
-            return None
-        
-        precision = self.detection_config.precision
-        is_match = confidence >= precision
-
-        if debug and confidence >= .3:
-            status = 'MATCH' if is_match else 'NO MATCH'
-            log(f"[DEBUG] [{template_name}] at ({x}, {y}) Confidence: {confidence:.2%} (required: {precision:.0%}) -> {status}")
-
-        if is_match:
-            return self._calculate_center(location, template_img.shape[:2], (x, y))
-
-        return None
-
-    def _get_search_area(self, screen, template_name, radius, debug):
-        template_data = self.templates[template_name]
-        template_img, _ = template_data
-
-        roi_config = self.detection_config.rois.get(template_name)
-        if isinstance(roi_config, str):
-            roi = self.detection_config.rois.get(roi_config)
-        else:
-            roi = roi_config
-
-        if not roi:
-            return screen, (0, 0)
-
+    def _scale_roi(self, roi):
+        """Scale a reference ROI (x, y, w, h) to actual capture coordinates."""
         x, y, w, h = roi
-        screen_h, screen_w = screen.shape[:2]
-        x = max(0, min(x, screen_w - 1))
-        y = max(0, min(y, screen_h - 1))
-        w = min(w, screen_w - x)
-        h = min(h, screen_h - y)
-
-        if w > 0 and h > 0:
-            result = self._check_xy(screen[y:y + h, x:x + w], x, y, template_data, template_img, template_name, debug)
-
-            if result != None:
-                return result
-            
-            if radius > 0:
-                concentric_coords = self._generate_concentric_square_pixels(x, y, radius)
-
-                for pixel in list(concentric_coords):
-                    x, y = pixel
-
-                    result = self._check_xy(screen[y:y + h, x:x + w], x, y, template_data, template_img, template_name, debug)
-
-                    if result != None:
-                        return result
-
-        return None
+        return (
+            int(x * self._scale_x),
+            int(y * self._scale_y),
+            int(w * self._scale_x),
+            int(h * self._scale_y),
+        )
 
     def _perform_match(self, search_area, template_data):
         template_img, mask = template_data
@@ -164,46 +106,144 @@ class Detector:
         _, confidence, _, location = cv.minMaxLoc(result)
         return confidence, location
 
-    def _calculate_center(self, location, template_shape, offset):
+    def _calculate_center(self, location, template_shape, ref_roi):
+        """Calculate the click position in actual screen coordinates.
+        
+        location: match position within the (resized-to-reference) search area
+        template_shape: (h, w) of the template
+        ref_roi: the original reference ROI (x, y, w, h) in 1920x1080 space
+        """
         h_t, w_t = template_shape
-        offset_x, offset_y = offset
+        ref_x, ref_y = ref_roi[0], ref_roi[1]
 
         # Position in 1080p reference space (within the game window)
-        ref_x = location[0] + w_t // 2 + offset_x
-        ref_y = location[1] + h_t // 2 + offset_y
+        pos_ref_x = ref_x + location[0] + w_t // 2
+        pos_ref_y = ref_y + location[1] + h_t // 2
 
-        # Scale back to actual window size, then add window position
-        scale_x = self.screen_config.monitor_width / self.screen_config.REFERENCE_WIDTH
-        scale_y = self.screen_config.monitor_height / self.screen_config.REFERENCE_HEIGHT
+        # Scale to actual capture pixels, then add window offset
+        # Use actual capture dimensions for scaling (handles DPI mismatch)
+        actual_scale_x = self._actual_width / self.REFERENCE_WIDTH
+        actual_scale_y = self._actual_height / self.REFERENCE_HEIGHT
+        
+        # But for click coordinates we need screen coordinates (logical pixels)
+        # The controller uses screen coordinates, so we scale by screen_config dimensions
+        screen_scale_x = self.screen_config.monitor_width / self.REFERENCE_WIDTH
+        screen_scale_y = self.screen_config.monitor_height / self.REFERENCE_HEIGHT
+
         return (
-            int(ref_x * scale_x) + self.screen_config.monitor_x,
-            int(ref_y * scale_y) + self.screen_config.monitor_y
+            int(pos_ref_x * screen_scale_x) + self.screen_config.monitor_x,
+            int(pos_ref_y * screen_scale_y) + self.screen_config.monitor_y
         )
 
-    def find(self, screen, template_name, radius = 0, debug=False):
+    def find(self, screen, template_name, radius=0, debug=False):
         if template_name not in self.templates:
             log(f"[INFO] ❌ Template '{template_name}' was not loaded.")
             return None
+
+        if self._scale_x is None:
+            return None
+
+        template_data = self.templates[template_name]
+        template_img, _ = template_data
+
+        # Get the ROI config (in reference 1920x1080 coordinates)
+        roi_config = self.detection_config.rois.get(template_name)
+        if isinstance(roi_config, str):
+            roi_config = self.detection_config.rois.get(roi_config)
+
+        if not roi_config:
+            # No ROI defined: search full screen (expensive)
+            # Resize full screen to reference size for matching
+            ref_frame = cv.resize(screen, (self.REFERENCE_WIDTH, self.REFERENCE_HEIGHT),
+                                  interpolation=cv.INTER_AREA)
+            confidence, location = self._perform_match(ref_frame, template_data)
+            if confidence is not None and confidence >= self.detection_config.precision:
+                if debug:
+                    log(f"[DEBUG] [{template_name}] Full-screen match confidence: {confidence:.2%}")
+                return self._calculate_center(location, template_img.shape[:2], (0, 0, self.REFERENCE_WIDTH, self.REFERENCE_HEIGHT))
+            return None
+
+        ref_roi = roi_config  # (x, y, w, h) in 1920x1080 space
+
+        # Try matching at the primary ROI position and concentric offsets
+        result = self._try_match_at_roi(screen, template_name, template_data, template_img, ref_roi, debug)
+        if result is not None:
+            return result
+
+        # Concentric search around the ROI (shifted positions)
+        if radius > 0:
+            ref_x, ref_y, ref_w, ref_h = ref_roi
+            step = max(1, int(5 * self._scale_x))  # Step size in native pixels, scaled from ~5px at 1080p
+            
+            for r in range(1, radius + 1):
+                offsets = []
+                offset_ref = r * 5  # 5 reference pixels per radius step
+                # 4 cardinal directions
+                offsets.append((ref_x + offset_ref, ref_y, ref_w, ref_h))
+                offsets.append((ref_x - offset_ref, ref_y, ref_w, ref_h))
+                offsets.append((ref_x, ref_y + offset_ref, ref_w, ref_h))
+                offsets.append((ref_x, ref_y - offset_ref, ref_w, ref_h))
+                # 4 diagonal directions
+                offsets.append((ref_x + offset_ref, ref_y + offset_ref, ref_w, ref_h))
+                offsets.append((ref_x - offset_ref, ref_y + offset_ref, ref_w, ref_h))
+                offsets.append((ref_x + offset_ref, ref_y - offset_ref, ref_w, ref_h))
+                offsets.append((ref_x - offset_ref, ref_y - offset_ref, ref_w, ref_h))
+
+                for shifted_roi in offsets:
+                    result = self._try_match_at_roi(screen, template_name, template_data, template_img, shifted_roi, debug)
+                    if result is not None:
+                        return result
+
+        return None
+
+    def _try_match_at_roi(self, screen, template_name, template_data, template_img, ref_roi, debug):
+        """Try to match a template within a specific ROI.
         
-        return self._get_search_area(screen, template_name, radius, debug)
+        1. Scale ROI to native capture coordinates
+        2. Crop from native screenshot
+        3. Resize crop to reference ROI size (INTER_AREA)
+        4. Match against original template
+        """
+        ref_x, ref_y, ref_w, ref_h = ref_roi
 
-        # template_data = self.templates[template_name]
-        # template_img, _ = template_data
+        # Scale ROI to actual capture coordinates
+        nat_x = int(ref_x * self._scale_x)
+        nat_y = int(ref_y * self._scale_y)
+        nat_w = int(ref_w * self._scale_x)
+        nat_h = int(ref_h * self._scale_y)
 
-        # search_area, offset = self._get_search_area(screen, template_name)
-        # confidence, location = self._perform_match(search_area, template_data)
+        # Clamp to screen bounds
+        screen_h, screen_w = screen.shape[:2]
+        nat_x = max(0, min(nat_x, screen_w - 1))
+        nat_y = max(0, min(nat_y, screen_h - 1))
+        nat_w = min(nat_w, screen_w - nat_x)
+        nat_h = min(nat_h, screen_h - nat_y)
 
-        # if confidence is None:
-        #     return None
+        if nat_w <= 0 or nat_h <= 0:
+            return None
 
-        # precision = self.detection_config.precision
-        # is_match = confidence >= precision
+        # Crop at native resolution
+        crop = screen[nat_y:nat_y + nat_h, nat_x:nat_x + nat_w]
 
-        # if debug:
-        #     status = 'MATCH' if is_match else 'NO MATCH'
-        #     log(f"[DEBUG] [{template_name}] Confidence: {confidence:.2%} (required: {precision:.0%}) -> {status}")
+        # Resize crop to reference ROI size using INTER_AREA (optimal for downscaling)
+        if crop.shape[1] != ref_w or crop.shape[0] != ref_h:
+            interpolation = cv.INTER_AREA if (crop.shape[1] > ref_w) else cv.INTER_LINEAR
+            crop = cv.resize(crop, (ref_w, ref_h), interpolation=interpolation)
 
-        # if is_match:
-        #     return self._calculate_center(location, template_img.shape[:2], offset)
+        # Match template against the reference-sized crop
+        confidence, location = self._perform_match(crop, template_data)
 
-        # return None
+        if confidence is None:
+            return None
+
+        precision = self.detection_config.precision
+        is_match = confidence >= precision
+
+        if debug and confidence >= 0.3:
+            status = 'MATCH' if is_match else 'NO MATCH'
+            log(f"[DEBUG] [{template_name}] Confidence: {confidence:.2%} (required: {precision:.0%}) -> {status}")
+
+        if is_match:
+            return self._calculate_center(location, template_img.shape[:2], ref_roi)
+
+        return None

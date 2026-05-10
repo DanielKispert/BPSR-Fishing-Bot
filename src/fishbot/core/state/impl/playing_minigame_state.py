@@ -34,12 +34,12 @@ class PlayingMinigameState(BotState):
         fish_complete = 0
         failed = 0
 
-        if self.detector.find(screen, "success", 1, debug=False):
+        if self.detector.find(screen, "success", 1, debug=True):
             fish_complete = 1
             self.bot.log("[MINIGAME] 🐟 Fish caught!")
             self.bot.stats.increment('fish_caught')
 
-        if fish_complete == 0 and self.detector.find(screen, "failure", 1, debug=False):
+        if fish_complete == 0 and self.detector.find(screen, "failure", 1, debug=True):
             fish_complete = 1
             failed = 1
             self.bot.log("[MINIGAME] 🐟 Fish got away!")
