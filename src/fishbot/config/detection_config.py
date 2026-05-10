@@ -49,8 +49,8 @@ class DetectionConfig:
             "left_arrow": (740, 490, 220, 100),
             "right_arrow": (960, 490, 220, 100),
             "failure": (973, 630, 702, 101),
-            "success": (1050, 695, 280, 80),
-            "continue": (1050, 695, 280, 80),
+            "success": (1422, 924, 337, 106),
+            "continue": (1422, 924, 337, 106),
             "level_check": (1101, 985, 48, 29),
             "connect_server": (1057, 763, 279, 67),
         }
