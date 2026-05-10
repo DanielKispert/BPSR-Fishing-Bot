@@ -18,7 +18,7 @@ class Detector:
     REFERENCE_HEIGHT = 1080
 
     # Base scales - the dynamic reciprocal scale is added after first capture
-    MATCH_SCALES_BASE = [0.8, 1.0, 1.2, 1.6]
+    MATCH_SCALES_BASE = [1.6, 0.8, 1.0, 1.2]
 
     def __init__(self, config):
         self.unified_config = config

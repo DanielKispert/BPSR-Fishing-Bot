@@ -18,8 +18,13 @@ class CheckingRodState(BotState):
 
         found_rod = self._detect_any_rod(screen)
 
-        # Retry with fresh captures if no rod found (fishing UI may still be loading)
         if not found_rod:
+            # Fast-path: detect the "Add a pole" empty slot
+            if self._detect_no_rod(screen):
+                self.bot.log("[CHECKING_ROD] ⚠️  No rod equipped! Adding...")
+                return self._replace_rod()
+
+            # Retry with fresh captures if no rod found (fishing UI may still be loading)
             for attempt in range(1, self.MAX_RETRIES + 1):
                 self.bot.log(f"[CHECKING_ROD] Rod not detected (attempt {attempt}/{self.MAX_RETRIES}), retrying...")
                 time.sleep(self.RETRY_DELAY)
@@ -29,27 +34,31 @@ class CheckingRodState(BotState):
                     break
 
         if not found_rod:
-            self.bot.log("[CHECKING_ROD] ⚠️  Broken rod! Replacing...")
-            self.bot.stats.increment('rod_breaks')
-            time.sleep(1)
+            self.bot.log("[CHECKING_ROD] ⚠️  Rod undetectable after retries. Replacing...")
+            return self._replace_rod()
 
-            self.controller.press_key('m')
-            time.sleep(1)
+        time.sleep(1)
+        self.bot.log("[CHECKING_ROD] ✅ Rod OK")
+        return StateType.CASTING_BAIT
 
-            x, y = self.window.ref_to_screen(1650, 580)
+    def _replace_rod(self):
+        """Equip a rod via the M-menu."""
+        self.bot.stats.increment('rod_breaks')
+        time.sleep(1)
 
-            self.controller.move_to(x, y)
-            time.sleep(0.5)
-            self.controller.move_to(x, y)
-            time.sleep(0.5)
-            self.controller.click('left')
-            time.sleep(1)
+        self.controller.press_key('m')
+        time.sleep(1)
 
-            self.bot.log("[CHECKING_ROD] ✅ Rod replaced")
-        else:
-            time.sleep(1)
-            self.bot.log("[CHECKING_ROD] ✅ Rod OK")
+        x, y = self.window.ref_to_screen(1650, 580)
 
+        self.controller.move_to(x, y)
+        time.sleep(0.5)
+        self.controller.move_to(x, y)
+        time.sleep(0.5)
+        self.controller.click('left')
+        time.sleep(1)
+
+        self.bot.log("[CHECKING_ROD] ✅ Rod equipped")
         return StateType.CASTING_BAIT
 
     def _detect_any_rod(self, screen):
@@ -59,3 +68,7 @@ class CheckingRodState(BotState):
             if self.detector.find(screen, rod, 5, debug=self.bot.debug_mode):
                 return True
         return False
+
+    def _detect_no_rod(self, screen):
+        """Detect the empty rod slot ('Add a pole' button)."""
+        return self.detector.find(screen, "no_rod", 3, debug=self.bot.debug_mode) is not None
