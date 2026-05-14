@@ -3,7 +3,18 @@ from .paths import TEMPLATES_PATH
 class DetectionConfig:
     def __init__(self):
 
-        self.precision = 0.50
+        self.precision = 0.65
+
+        # Per-template precision overrides
+        self.precision_overrides = {
+        }
+
+        # Templates that use HSV color masking instead of grayscale matching.
+        # Format: (hue_low, sat_low, val_low, hue_high, sat_high, val_high)
+        self.color_match_templates = {
+            "left_arrow": (5, 80, 80, 30, 255, 255),
+            "right_arrow": (5, 80, 80, 30, 255, 255),
+        }
 
         self.templates_path = str(TEMPLATES_PATH)
 
@@ -38,7 +49,7 @@ class DetectionConfig:
         #     "level_check": None
         # }
 
-        #FullHD 1080p Config
+        #Full HD 1080p Config
         self.rois = {
             "fishing_spot_btn": (1400, 540, 121, 55),
             "broken_rod": (1635, 982, 250, 63),

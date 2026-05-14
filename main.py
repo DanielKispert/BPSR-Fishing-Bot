@@ -11,13 +11,13 @@ def main():
 
     bot.start()
 
-    log("[INFO] Press '7' to start, or '6' to start with debug (screenshots).")
+    log("[INFO] Press '7' to start, or '6' to start with debug (screenshots). Use '0' to toggle burst screenshots anytime.")
 
     while not bot.is_stopped():
         if not hotkeys.paused:
             bot.update()
 
-        time.sleep(0.1)
+        time.sleep(0.05)
 
     log("[INFO] Bot finished.")
 

@@ -1,4 +1,5 @@
 import sys
+import os
 import multiprocessing
 from PyQt6.QtWidgets import QApplication, QWidget
 from PyQt6.QtGui import QPainter, QColor, QPen, QFont
@@ -7,6 +8,9 @@ from PyQt6.QtCore import Qt, QRect
 # Imports detection settings from your project
 from src.fishbot.config.detection_config import DetectionConfig
 from src.fishbot.config.screen_config import ScreenConfig
+
+# Disable Qt's automatic DPI scaling so pixel coordinates match pywinctl/mss
+os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
 
 class RoiVisualizer(QWidget):
     def __init__(self):
@@ -36,9 +40,13 @@ class RoiVisualizer(QWidget):
             if not roi:
                 continue
 
-            x, y, w, h = roi
-            x = x + self.screen_config.monitor_x
-            y = y + self.screen_config.monitor_y
+            ref_x, ref_y, ref_w, ref_h = roi
+            scale_x = self.screen_config.monitor_width / self.screen_config.REFERENCE_WIDTH
+            scale_y = self.screen_config.monitor_height / self.screen_config.REFERENCE_HEIGHT
+            x = int(ref_x * scale_x) + self.screen_config.monitor_x
+            y = int(ref_y * scale_y) + self.screen_config.monitor_y
+            w = int(ref_w * scale_x)
+            h = int(ref_h * scale_y)
             color = colors[color_index % len(colors)]
             color_index += 1
 

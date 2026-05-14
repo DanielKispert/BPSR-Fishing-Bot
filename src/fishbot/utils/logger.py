@@ -43,8 +43,12 @@ _console_handler.setFormatter(logging.Formatter("[%(asctime)s] %(message)s", dat
 
 # File handler: DEBUG and above, full format, rotating
 # 2 MB per file, keep 3 backups → max 8 MB on disk
+_log_file = _LOG_DIR / "fishbot.log"
+# Clear log on each bot start
+if _log_file.exists():
+    _log_file.write_text("", encoding="utf-8")
 _file_handler = RotatingFileHandler(
-    filename=_LOG_DIR / "fishbot.log",
+    filename=_log_file,
     maxBytes=2 * 1024 * 1024,
     backupCount=3,
     encoding="utf-8",
@@ -58,11 +62,6 @@ _file_handler.setFormatter(logging.Formatter(
 _logger.addHandler(_console_handler)
 _logger.addHandler(_file_handler)
 
-# Session separator on import (marks new bot run in log file)
-_file_handler.stream.write("\n" + "=" * 70 + "\n")
-_file_handler.stream.write(f"  NEW SESSION\n")
-_file_handler.stream.write("=" * 70 + "\n\n")
-_file_handler.stream.flush()
 
 
 def log(message):

@@ -76,6 +76,7 @@ An automated and open-source fishing bot built in Python. It uses image detectio
     python main.py
     ```
 3.  The bot will be ready. Press **7** key to start/pause and **8** key in-game or in the terminal to stop the bot at any time.
+4.  Press **0** at any time to toggle burst screenshots (captures every detection frame). This mode has priority over the regular debug screenshot interval.
 
 ---
 

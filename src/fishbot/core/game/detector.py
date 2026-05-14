@@ -46,10 +46,12 @@ class Detector:
 
         # Screenshot capture for debugging - use CWD-relative path for portability
         self._last_screenshot_time = 0
+        self._screenshot_sequence = 0
         self._screenshot_dir = Path.cwd() / "logs" / "screenshots"
         self._screenshot_dir.mkdir(parents=True, exist_ok=True)
-        self._max_screenshots = 60
+        self._max_screenshots = 1000
         self.screenshots_enabled = False  # Toggled via hotkey '6'
+        self.burst_screenshots_enabled = False  # Toggled via hotkey '0' and takes priority
         self.screenshot_interval = 1.0  # Seconds between debug screenshots (adjusted per state)
         log(f"[INFO] 📸 Screenshots will be saved to: {self._screenshot_dir}")
 
@@ -105,8 +107,10 @@ class Detector:
                 self._match_scales.insert(0, reciprocal)  # Highest priority
             log(f"[INFO] 📐 Match scales: {self._match_scales}")
 
-        # Save debug screenshot once per second (only when debug mode is active)
-        if self.screenshots_enabled:
+        # Burst capture has priority and saves every detection frame.
+        if self.burst_screenshots_enabled:
+            self._save_debug_screenshot(img, prefix="burst")
+        elif self.screenshots_enabled:
             now = time.time()
             if now - self._last_screenshot_time >= self.screenshot_interval:
                 self._last_screenshot_time = now
@@ -114,30 +118,58 @@ class Detector:
 
         return img
 
-    def _save_debug_screenshot(self, img):
+    def _resize_to_reference(self, img):
+        return cv.resize(img, (self.REFERENCE_WIDTH, self.REFERENCE_HEIGHT), interpolation=cv.INTER_AREA)
+
+    def _draw_rois(self, img):
+        """Draw all configured ROIs onto a 1920x1080 reference image (same style as ROI visualizer)."""
+        colors = [
+            (0, 0, 255), (0, 255, 0), (255, 0, 0),
+            (0, 255, 255), (255, 0, 255), (255, 255, 0)
+        ]
+        color_index = 0
+        for name, roi in self.detection_config.rois.items():
+            if not roi:
+                continue
+            x, y, w, h = roi
+            color = colors[color_index % len(colors)]
+            color_index += 1
+            cv.rectangle(img, (x, y), (x + w, y + h), color, 2)
+            cv.putText(img, name, (x + 5, y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
+
+    def _save_debug_screenshot(self, img, prefix="frame"):
         """Save a screenshot scaled to 1920x1080 for offline debugging."""
         try:
-            ref_img = cv.resize(img, (self.REFERENCE_WIDTH, self.REFERENCE_HEIGHT), interpolation=cv.INTER_AREA)
+            ref_img = self._resize_to_reference(img)
+
+            if prefix == "burst":
+                self._draw_rois(ref_img)
+
             timestamp = time.strftime("%H%M%S")
-            filepath = self._screenshot_dir / f"frame_{timestamp}.png"
+            millis = int((time.time_ns() // 1_000_000) % 1000)
+            self._screenshot_sequence += 1
+            filepath = self._screenshot_dir / f"{prefix}_{timestamp}_{millis:03d}_{self._screenshot_sequence:06d}.png"
             success = cv.imwrite(str(filepath), ref_img)
+
             if success:
                 log(f"[DEBUG] 📸 Saved: {filepath}")
             else:
                 log(f"[ERROR] 📸 cv.imwrite returned False for: {filepath}")
 
-            # Rolling buffer: delete oldest files if over limit
-            files = sorted(self._screenshot_dir.glob("frame_*.png"))
-            while len(files) > self._max_screenshots:
-                files[0].unlink()
-                files.pop(0)
+            self._enforce_rolling_buffer()
         except Exception as e:
             log(f"[ERROR] 📸 Screenshot save failed: {type(e).__name__}: {e}")
+
+    def _enforce_rolling_buffer(self):
+        files = sorted(self._screenshot_dir.glob("*.png"), key=lambda p: p.name)
+        while len(files) > self._max_screenshots:
+            files[0].unlink()
+            files.pop(0)
 
     def save_timeout_frame(self, screen, state_name):
         """Save current frame when a state times out - critical for debugging."""
         try:
-            ref_img = cv.resize(screen, (self.REFERENCE_WIDTH, self.REFERENCE_HEIGHT), interpolation=cv.INTER_AREA)
+            ref_img = self._resize_to_reference(screen)
             timestamp = time.strftime("%H%M%S")
             filepath = self._screenshot_dir / f"timeout_{state_name}_{timestamp}.png"
             cv.imwrite(str(filepath), ref_img)
@@ -163,7 +195,19 @@ class Detector:
     def _perform_match_multiscale(self, search_area, template_data, template_name):
         """Try matching template at multiple scales. Returns (confidence, location, scale)."""
         template_img, mask = template_data
-        search_gray = cv.cvtColor(search_area, cv.COLOR_BGR2GRAY)
+
+        # Use HSV color masking for configured templates (e.g. yellow arrows)
+        color_range = self.detection_config.color_match_templates.get(template_name)
+        if color_range is not None:
+            hsv_search = cv.cvtColor(search_area, cv.COLOR_BGR2HSV)
+            hsv_template = cv.cvtColor(template_img, cv.COLOR_BGR2HSV)
+            lower = np.array(color_range[:3])
+            upper = np.array(color_range[3:])
+            search_gray = cv.inRange(hsv_search, lower, upper)
+            template_gray_base = cv.inRange(hsv_template, lower, upper)
+        else:
+            search_gray = cv.cvtColor(search_area, cv.COLOR_BGR2GRAY)
+            template_gray_base = None
 
         best_confidence = 0
         best_location = None
@@ -179,10 +223,14 @@ class Detector:
                 continue
 
             interp = cv.INTER_AREA if scale < 1 else cv.INTER_LINEAR
-            scaled_template_gray = cv.resize(
-                cv.cvtColor(template_img, cv.COLOR_BGR2GRAY),
-                (new_w, new_h), interpolation=interp
-            )
+
+            if template_gray_base is not None:
+                scaled_template_gray = cv.resize(template_gray_base, (new_w, new_h), interpolation=interp)
+            else:
+                scaled_template_gray = cv.resize(
+                    cv.cvtColor(template_img, cv.COLOR_BGR2GRAY),
+                    (new_w, new_h), interpolation=interp
+                )
 
             scaled_mask = None
             if mask is not None:
@@ -267,28 +315,31 @@ class Detector:
 
         return None
 
-    def _search_full_screen(self, screen, template_name, template_data, debug):
-        """Search the full screen with multi-scale matching."""
-        confidence, location, scale = self._perform_match_multiscale(screen, template_data, template_name)
-
+    def _evaluate_match(self, confidence, location, scale, template_name, template_data, nat_offset_x, nat_offset_y, debug):
+        """Evaluate a multi-scale match result and return click position or None."""
         if confidence is None or location is None:
             return None
 
-        precision = self.detection_config.precision
+        precision = self.detection_config.precision_overrides.get(template_name, self.detection_config.precision)
         is_match = confidence >= precision
 
-        if debug:
+        if debug and is_match:
             status = 'MATCH' if is_match else 'NO MATCH'
-            log(f"[DEBUG] [{template_name}] Full-screen confidence: {confidence:.2%} @ scale {scale:.2f} (required: {precision:.0%}) -> {status}")
+            log(f"[INFO] [{template_name}] Confidence: {confidence:.2%} @ scale {scale:.2f} (required: {precision:.0%}) -> {status}")
 
         if is_match:
             self._scale_cache[template_name] = scale
             template_img, _ = template_data
             scaled_w = int(template_img.shape[1] * scale)
             scaled_h = int(template_img.shape[0] * scale)
-            return self._calculate_center_native(location, (scaled_h, scaled_w), 0, 0)
+            return self._calculate_center_native(location, (scaled_h, scaled_w), nat_offset_x, nat_offset_y)
 
         return None
+
+    def _search_full_screen(self, screen, template_name, template_data, debug):
+        """Search the full screen with multi-scale matching."""
+        confidence, location, scale = self._perform_match_multiscale(screen, template_data, template_name)
+        return self._evaluate_match(confidence, location, scale, template_name, template_data, 0, 0, debug)
 
     def _try_match_at_roi(self, screen, template_name, template_data, ref_roi, debug):
         """Try to match a template within a specific ROI using multi-scale matching.
@@ -320,22 +371,4 @@ class Detector:
 
         # Multi-scale matching against native crop
         confidence, location, scale = self._perform_match_multiscale(crop, template_data, template_name)
-
-        if confidence is None or location is None:
-            return None
-
-        precision = self.detection_config.precision
-        is_match = confidence >= precision
-
-        if debug:
-            status = 'MATCH' if is_match else 'NO MATCH'
-            log(f"[DEBUG] [{template_name}] Confidence: {confidence:.2%} @ scale {scale:.2f} (required: {precision:.0%}) -> {status}")
-
-        if is_match:
-            self._scale_cache[template_name] = scale
-            template_img, _ = template_data
-            scaled_w = int(template_img.shape[1] * scale)
-            scaled_h = int(template_img.shape[0] * scale)
-            return self._calculate_center_native(location, (scaled_h, scaled_w), nat_x, nat_y)
-
-        return None
+        return self._evaluate_match(confidence, location, scale, template_name, template_data, nat_x, nat_y, debug)

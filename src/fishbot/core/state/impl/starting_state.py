@@ -45,8 +45,8 @@ class StartingState(BotState):
 
         if already_fishing:
             self.bot.log("[STARTING] 🎣 Already in fishing mode — skipping interaction")
-            return StateType.CHECKING_ROD      
-        
+            return StateType.CHECKING_ROD
+
         # 3️⃣ Fallback: still searching for fishing spot
         current_time = time.time()
         if current_time - self._last_search_log > 2:

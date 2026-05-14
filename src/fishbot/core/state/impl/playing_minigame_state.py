@@ -11,8 +11,8 @@ class PlayingMinigameState(BotState):
     def __init__(self, bot):
         super().__init__(bot)
         self._current_direction = None
-        self.switch_delay = 0.5
         self._minigame_start = None
+        self._retry_until = None
 
     def _handle_arrow(self, direction, screen):
         arrow_template = f"{direction}_arrow"
@@ -20,18 +20,17 @@ class PlayingMinigameState(BotState):
         key_to_release = 'd' if direction == 'left' else 'a'
         opposite_direction = 'right' if direction == 'left' else 'left'
 
-        if self.detector.find(screen, arrow_template):
+        arrow_found = self.detector.find(screen, arrow_template, debug=True)
+        if arrow_found:
             if self._current_direction is None:
                 self.bot.log(f"[MINIGAME] ▶️ Moving to the {direction} (Holding '{key_to_press}')")
                 self.controller.key_down(key_to_press)
                 self._current_direction = direction
-                time.sleep(self.switch_delay)
 
             if self._current_direction == opposite_direction:
                 self.bot.log(f"[MINIGAME] ◀️ Switching to the {direction} (Releasing '{key_to_release}')")
                 self.controller.key_up(key_to_release)
                 self._current_direction = None
-                time.sleep(self.switch_delay)
 
     def _detect_fishing_idle(self, screen):
         """Check if the fishing idle UI is visible.
@@ -45,10 +44,16 @@ class PlayingMinigameState(BotState):
         return False
 
     def handle(self, screen):
-        # Track minigame start time (reset if stale from previous timeout)
         now = time.time()
         if self._minigame_start is None or (now - self._minigame_start) > 45:
             self._minigame_start = now
+
+        # Non-blocking retry wait — loop keeps running (screenshots, stop-check)
+        if self._retry_until is not None:
+            if now < self._retry_until:
+                return StateType.PLAYING_MINIGAME
+            self._retry_until = None
+            return StateType.CHECKING_ROD
 
         fish_complete = 0
         failed = 0
@@ -64,8 +69,6 @@ class PlayingMinigameState(BotState):
             self.bot.log("[MINIGAME] ❌ Fish escaped!")
             self.bot.stats.increment('fish_escaped')
 
-        # Fallback: detect fishing idle UI after minimum play time
-        # (fish escaped popup was too brief to catch)
         if fish_complete == 0:
             elapsed = now - self._minigame_start
             if elapsed > self.IDLE_CHECK_DELAY:
@@ -89,10 +92,9 @@ class PlayingMinigameState(BotState):
                 else:
                     return StateType.FINISHING
             else:
-                # Failure: stay in fishing UI, retry
                 self.bot.log("[MINIGAME] 🔄 Retrying...")
-                time.sleep(2)
-                return StateType.CHECKING_ROD
+                self._retry_until = now + 2.0
+                return StateType.PLAYING_MINIGAME
 
         self._handle_arrow('left', screen)
         self._handle_arrow('right', screen)
