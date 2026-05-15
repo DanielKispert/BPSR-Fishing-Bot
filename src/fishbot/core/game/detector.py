@@ -248,7 +248,7 @@ class Detector:
                 best_scale = scale
 
                 # Early exit if we found a good match
-                if confidence >= 0.70:
+                if confidence >= self.detection_config.precision:
                     break
 
         return best_confidence, best_location, best_scale

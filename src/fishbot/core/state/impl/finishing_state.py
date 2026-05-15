@@ -1,13 +1,8 @@
-import time
-
 from ..bot_state import BotState
 from ..state_type import StateType
 
 
 class FinishingState(BotState):
-
-    def __init__(self, bot):
-        super().__init__(bot)
 
     def handle(self, screen):
 
@@ -15,13 +10,10 @@ class FinishingState(BotState):
 
         if pos:
             self.bot.log("[FINISHING] 🖱️ Clicking 'Continue'...")
-            self.controller.move_to(pos[0], pos[1])
-            time.sleep(0.5)
-            self.controller.move_to(pos[0], pos[1])
-            time.sleep(1)
-            self.controller.click('left')
+            if self.controller.click_at_reliable(pos[0], pos[1], self.bot, post_delay=1.0):
+                return StateType.FINISHING
 
-	        # Count one full fishing attempt
+            # Count one full fishing attempt
             self.bot.stats.increment("cycles")
 
             return StateType.CHECKING_ROD
