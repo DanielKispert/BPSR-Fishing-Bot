@@ -3,26 +3,23 @@ import time
 from ..bot_state import BotState
 from ..state_type import StateType
 
-
 class StartingState(BotState):
 
     def __init__(self, bot):
         super().__init__(bot)
         self._last_search_log = 0
-        # self._count = 0
+
+    def on_enter(self):
+        self._last_search_log = 0
 
     def handle(self, screen):
-        # self._count = self._count + 1
-
         if self.detector.find(screen, "connect_server", 5, debug=self.bot.debug_mode):
             x, y = self.window.ref_to_screen(1100, 795)
 
-            self.controller.move_to(x, y)
-            time.sleep(0.5)
-            self.controller.move_to(x, y)
-            time.sleep(0.5)
-            self.controller.click('left')
-            time.sleep(1)
+            if self.controller.click_at_reliable(x, y, self.bot):
+                return StateType.STARTING
+            if self.bot.sleep_or_stop(1):
+                return StateType.STARTING
 
             self.bot.log("[RECONNECT] ✅ confirm server connection")
 
@@ -32,11 +29,13 @@ class StartingState(BotState):
         if pos:
             self.bot.log(f"[STARTING] ✅ Fishing spot detected at {pos}")
             self.bot.log("[STARTING] Pressing 'F'...")
-            time.sleep(0.5)
+            if self.bot.sleep_or_stop(0.5):
+                return StateType.STARTING
 
             self.controller.press_key('f')
             self.bot.log("[STARTING] Entering fishing mode")
-            time.sleep(2)
+            if self.bot.sleep_or_stop(2):
+                return StateType.STARTING
 
             return StateType.CHECKING_ROD
 
@@ -55,11 +54,12 @@ class StartingState(BotState):
             # wiggle a bit to get the fishing button to come back up
             self.controller.key_down('s')
             self.controller.key_down('d')
-            #self.controller.key_down('a')
-            time.sleep(0.1)
+            if self.bot.sleep_or_stop(0.1):
+                self.controller.key_up('s')
+                self.controller.key_up('d')
+                return StateType.STARTING
             self.controller.key_up('s')
             self.controller.key_up('d')
-            #self.controller.key_up('a')
 
             if self.bot.debug_mode:
                 self.bot.log("[STARTING] 💡 Debug enabled")

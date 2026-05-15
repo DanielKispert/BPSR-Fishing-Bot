@@ -61,7 +61,3 @@ class Hotkeys:
             log("[HOTKEY] 📸⚡ Burst screenshots ENABLED (capture every detection frame; priority over normal debug screenshots)")
         else:
             log("[HOTKEY] 📸⚡ Burst screenshots DISABLED")
-
-    def wait_for_exit(self):
-        """Keeps the script running until the exit hotkey is pressed."""
-        keyboard.wait('8')

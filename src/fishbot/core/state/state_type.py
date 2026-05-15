@@ -7,3 +7,4 @@ class StateType(Enum):
     WAITING_FOR_BITE = auto()
     PLAYING_MINIGAME = auto()
     FINISHING = auto()
+    BUYING = auto()

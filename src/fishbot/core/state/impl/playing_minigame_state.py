@@ -1,7 +1,9 @@
+import random
 import time
 
 from ..bot_state import BotState
 from ..state_type import StateType
+from src.fishbot.config.detection_config import ROD_TEMPLATES
 
 
 class PlayingMinigameState(BotState):
@@ -14,23 +16,37 @@ class PlayingMinigameState(BotState):
         self._minigame_start = None
         self._retry_until = None
 
+    def on_enter(self):
+        self._current_direction = None
+        self._minigame_start = None
+        self._retry_until = None
+
     def _handle_arrow(self, direction, screen):
         arrow_template = f"{direction}_arrow"
         key_to_press = 'a' if direction == 'left' else 'd'
         key_to_release = 'd' if direction == 'left' else 'a'
-        opposite_direction = 'right' if direction == 'left' else 'left'
 
         arrow_found = self.detector.find(screen, arrow_template, debug=True)
-        if arrow_found:
-            if self._current_direction is None:
-                self.bot.log(f"[MINIGAME] ▶️ Moving to the {direction} (Holding '{key_to_press}')")
-                self.controller.key_down(key_to_press)
-                self._current_direction = direction
+        if not arrow_found:
+            return False
 
-            if self._current_direction == opposite_direction:
-                self.bot.log(f"[MINIGAME] ◀️ Switching to the {direction} (Releasing '{key_to_release}')")
-                self.controller.key_up(key_to_release)
-                self._current_direction = None
+        if self._current_direction == direction:
+            # Already holding the correct key
+            return True
+
+        if self._current_direction is not None:
+            # Switch: release old key first
+            self.bot.log(f"[MINIGAME] 🔄 Switching to {direction} ('{key_to_release}' → '{key_to_press}')")
+            self.controller.key_up(key_to_release)
+            # Micro-pause between key release and press (human-like)
+            if self.bot.config.bot.anti_detection:
+                time.sleep(random.uniform(0.02, 0.06))
+        else:
+            self.bot.log(f"[MINIGAME] ▶️ Moving {direction} (Holding '{key_to_press}')")
+
+        self.controller.key_down(key_to_press)
+        self._current_direction = direction
+        return True
 
     def _detect_fishing_idle(self, screen):
         """Check if the fishing idle UI is visible.
@@ -38,14 +54,14 @@ class PlayingMinigameState(BotState):
         with rod templates as secondary confirmation."""
         if self.detector.find(screen, "level_check", 5):
             return True
-        for rod in ["flex_rod", "sturdy_rod", "reg_rod"]:
+        for rod in ROD_TEMPLATES:
             if self.detector.find(screen, rod, 5):
                 return True
         return False
 
     def handle(self, screen):
         now = time.time()
-        if self._minigame_start is None or (now - self._minigame_start) > 45:
+        if self._minigame_start is None:
             self._minigame_start = now
 
         # Non-blocking retry wait — loop keeps running (screenshots, stop-check)
@@ -55,39 +71,40 @@ class PlayingMinigameState(BotState):
             self._retry_until = None
             return StateType.CHECKING_ROD
 
-        fish_complete = 0
-        failed = 0
+        fish_complete = False
+        failed = False
 
         if self.detector.find(screen, "success", 1, debug=True):
-            fish_complete = 1
+            fish_complete = True
             self.bot.log("[MINIGAME] 🐟 Fish caught!")
             self.bot.stats.increment('fish_caught')
 
-        if fish_complete == 0 and self.detector.find(screen, "failure", 1, debug=True):
-            fish_complete = 1
-            failed = 1
+        if not fish_complete and self.detector.find(screen, "failure", 1, debug=True):
+            fish_complete = True
+            failed = True
             self.bot.log("[MINIGAME] ❌ Fish escaped!")
             self.bot.stats.increment('fish_escaped')
 
-        if fish_complete == 0:
+        if not fish_complete:
             elapsed = now - self._minigame_start
             if elapsed > self.IDLE_CHECK_DELAY:
                 if self._detect_fishing_idle(screen):
-                    fish_complete = 1
-                    failed = 1
-                    self.bot.log("[MINIGAME] ❌ Fish escaped (idle UI detected)")
+                    fish_complete = True
+                    failed = True
+                    self.bot.log('[MINIGAME] ❌ Fish escaped (idle UI detected)')
                     self.bot.stats.increment('fish_escaped')
 
-        if fish_complete == 1:
+        if fish_complete:
             self.controller.release_all_controls()
             self._current_direction = None
             self._minigame_start = None
 
-            if failed == 0:
+            if not failed:
                 if self.config.quick_finish_enabled:
                     self.bot.log("[MINIGAME] ⏩ Quick finishing...")
                     self.controller.press_key('esc')
-                    time.sleep(0.5)
+                    if self.bot.sleep_or_stop(0.5):
+                        return StateType.PLAYING_MINIGAME
                     return StateType.STARTING
                 else:
                     return StateType.FINISHING
@@ -96,7 +113,8 @@ class PlayingMinigameState(BotState):
                 self._retry_until = now + 2.0
                 return StateType.PLAYING_MINIGAME
 
-        self._handle_arrow('left', screen)
-        self._handle_arrow('right', screen)
+        # Try both directions — first match wins
+        if not self._handle_arrow('left', screen):
+            self._handle_arrow('right', screen)
 
         return StateType.PLAYING_MINIGAME

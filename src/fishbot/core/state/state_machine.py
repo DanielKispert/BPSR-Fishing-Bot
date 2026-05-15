@@ -33,6 +33,7 @@ class StateMachine:
 
         self.current_state_name = new_state_name
         self.current_state = self.states[self.current_state_name]
+        self.current_state.on_enter()
         self.state_start_time = time.time()
 
         # Adjust screenshot frequency: faster during minigame for debugging
@@ -42,7 +43,7 @@ class StateMachine:
             self.bot.detector.screenshot_interval = 2.0
 
     def _check_state_timeout(self):
-        timeout_limit = self.config.state_timeouts.get(self.current_state_name.name)
+        timeout_limit = self.config.state_timeouts.get(self.current_state_name)
         if not timeout_limit:
             return False
 
@@ -57,13 +58,14 @@ class StateMachine:
             # If we're in the minigame, stay in fishing UI (don't press ESC)
             if self.current_state_name == StateType.PLAYING_MINIGAME:
                 log("[TIMEOUT] 🔄 Staying in fishing UI, going to CHECKING_ROD.")
-                time.sleep(2)
-                self.set_state(StateType.CHECKING_ROD, force=True)
+                if not self.bot.sleep_or_stop(2):
+                    self.set_state(StateType.CHECKING_ROD, force=True)
             else:
                 log("[TIMEOUT] 🚨 Pressing 'ESC' to reset.")
-                self.bot.controller.press_key('esc')
-                time.sleep(0.5)
-                self.set_state(StateType.STARTING, force=True)
+                if not self.bot.is_stopped():
+                    self.bot.controller.press_key('esc')
+                if not self.bot.sleep_or_stop(0.5):
+                    self.set_state(StateType.STARTING, force=True)
 
             return True
         return False

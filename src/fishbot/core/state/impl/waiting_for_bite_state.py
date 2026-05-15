@@ -10,6 +10,9 @@ class WaitingForBiteState(BotState):
         super().__init__(bot)
         self._last_wait_log = 0
 
+    def on_enter(self):
+        self._last_wait_log = 0
+
     def handle(self, screen):
 
         pos = self.detector.find(screen, "exclamation", 1, debug=self.bot.debug_mode)

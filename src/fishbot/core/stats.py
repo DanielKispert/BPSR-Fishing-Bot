@@ -1,3 +1,6 @@
+from src.fishbot.utils.logger import log
+
+
 class StatsTracker:
     def __init__(self):
         self.stats = {
@@ -13,10 +16,11 @@ class StatsTracker:
             self.stats[stat_name] += value
 
     def show(self):
-        print("\n" + "=" * 50)
-        print("📊 STATISTICS")
-        print("=" * 50)
+        log("")
+        log("=" * 50)
+        log("📊 STATISTICS")
+        log("=" * 50)
         for stat, value in self.stats.items():
             title = stat.replace('_', ' ').replace('cycles', 'Cycles completed').capitalize()
-            print(f"  {title}: {value}")
-        print("=" * 50)
+            log(f"  {title}: {value}")
+        log("=" * 50)

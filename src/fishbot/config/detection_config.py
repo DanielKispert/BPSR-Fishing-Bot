@@ -1,5 +1,7 @@
 from .paths import TEMPLATES_PATH
 
+ROD_TEMPLATES = ("flex_rod", "sturdy_rod", "reg_rod")
+
 class DetectionConfig:
     def __init__(self):
 
@@ -20,11 +22,10 @@ class DetectionConfig:
 
         self.templates = {
             "fishing_spot_btn": "fishing_spot_btn.png",
-            "broken_rod": "broken_rod.png",
-            "new_rod": "new_rod.png",
             "reg_rod": "reg_pole.png",
             "sturdy_rod": "sturdy_pole.png",
             "flex_rod": "flex_pole.png",
+            "broken_rod": "broken_rod.png",
             "no_rod": "no_rod.png",
             "exclamation": "exclamation.png",
             "left_arrow": "left_arrow.png",
@@ -33,31 +34,29 @@ class DetectionConfig:
             "success": "success.png",
             "continue": "continue.png",
             "level_check": "level_check.png",
-            "connect_server": "connect.png"
+            "connect_server": "connect.png",
+            # Shop UI templates (capture at 1920x1080)
+            "shop_icon": "shop_icon.png",
+            "shop_rod_tab": "shop_rod_tab.png",
+            "shop_bait_tab": "shop_bait_tab.png",
+            "shop_bait_cheap_tab": "shop_bait_cheap_tab.png",
+            "shop_quantity": "shop_quantity.png",
+            "shop_buy_btn": "shop_buy_btn.png",
+            "shop_ok_btn": "shop_ok_btn.png",
+            "shop_confirm": "shop_confirm.png",
+            "shop_close": "shop_close.png",
+            "empty_bait_slot": "empty_bait_slot.png",
         }
 
-        # General Resolutions Config, But Slow Response Time
-        # self.rois = {
-        #     "fishing_spot": None,
-        #     "broken_rod": None,
-        #     "new_rod": None,
-        #     "exclamation": None,
-        #     "left_arrow": None,
-        #     "right_arrow": None,
-        #     "success": None,
-        #     "continue": None,
-        #     "level_check": None
-        # }
 
         #Full HD 1080p Config
         self.rois = {
             "fishing_spot_btn": (1400, 540, 121, 55),
-            "broken_rod": (1635, 982, 250, 63),
             "reg_rod": (1598, 970, 290, 63),
             "sturdy_rod": (1597, 969, 274, 67),
             "flex_rod": (1597, 969, 284, 66),
+            "broken_rod": (1597, 969, 284, 66),
             "no_rod": (1536, 978, 352, 70),
-            "new_rod": (1624, 563, 185, 65),
             "exclamation": (929, 438, 52, 142),
             "left_arrow": (740, 490, 220, 100),
             "right_arrow": (960, 490, 220, 100),
@@ -66,4 +65,15 @@ class DetectionConfig:
             "continue": (1422, 924, 337, 106),
             "level_check": (1101, 985, 48, 29),
             "connect_server": (1057, 763, 279, 67),
+            # Shop UI ROIs (approximate for 1920x1080 — update after capturing templates)
+            "shop_icon": (400, 200, 1120, 680),
+            "shop_rod_tab": (400, 200, 600, 400),
+            "shop_bait_tab": (400, 200, 600, 400),
+            "shop_bait_cheap_tab": (400, 200, 600, 400),
+            "shop_quantity": (700, 400, 500, 200),
+            "shop_buy_btn": (800, 600, 400, 200),
+            "shop_ok_btn": (700, 400, 500, 200),
+            "shop_confirm": (700, 400, 500, 300),
+            "shop_close": (1200, 150, 200, 100),
+            "empty_bait_slot": (1300, 950, 150, 80),
         }

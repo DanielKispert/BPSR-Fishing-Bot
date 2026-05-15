@@ -1,20 +1,20 @@
+import threading
 import time
 
 from src.fishbot.config import Config
 from src.fishbot.core.game.controller import GameController
 from src.fishbot.core.game.detector import Detector
-from src.fishbot.core.interceptors.level_check_interceptor import LevelCheckInterceptor
 from src.fishbot.core.state.impl.casting_bait_state import CastingBaitState
 from src.fishbot.core.state.impl.checking_rod_state import CheckingRodState
 from src.fishbot.core.state.impl.finishing_state import FinishingState
 from src.fishbot.core.state.impl.playing_minigame_state import PlayingMinigameState
 from src.fishbot.core.state.impl.starting_state import StartingState
 from src.fishbot.core.state.impl.waiting_for_bite_state import WaitingForBiteState
+from src.fishbot.core.state.impl.buying_state import BuyingState
 from src.fishbot.core.state.state_machine import StateMachine
 from src.fishbot.core.state.state_type import StateType
 from src.fishbot.core.stats import StatsTracker
 from src.fishbot.utils.logger import log
-
 
 class FishingBot:
     def __init__(self):
@@ -26,10 +26,10 @@ class FishingBot:
         self.controller = GameController(self.config)
         self.state_machine = StateMachine(self)
 
-        self.level_check_interceptor = LevelCheckInterceptor(self)
-
         self._stopped = False
+        self._stop_event = threading.Event()
         self.debug_mode = self.config.bot.debug_mode
+        self._stats_shown = False
 
         self.target_delay = 0
         if self.config.bot.target_fps > 0:
@@ -44,14 +44,19 @@ class FishingBot:
         self.state_machine.add_state(StateType.WAITING_FOR_BITE, WaitingForBiteState(self))
         self.state_machine.add_state(StateType.PLAYING_MINIGAME, PlayingMinigameState(self))
         self.state_machine.add_state(StateType.FINISHING, FinishingState(self))
+        self.state_machine.add_state(StateType.BUYING, BuyingState(self))
 
     def start(self):
+        self._stopped = False
+        self._stop_event.clear()
+        self._stats_shown = False
+
         log("[INFO] 🎣 Bot ready!")
         log("[INFO] ⚠️ IMPORTANT: Keep the game in FOCUS (active window)")
         log(f"[INFO] ⚙️ Accuracy: {self.config.bot.detection.precision * 100:.0f}%")
         log(f"[INFO] ⚙️ Target FPS: {'MAX' if self.config.bot.target_fps == 0 else self.config.bot.target_fps}")
         log("[INFO] ⚠️ Warming up detection system...")
-        time.sleep(1)  # Allows enough time for the screen capture components to initialize
+        self.sleep_or_stop(1)  # Allows enough time for the screen capture components to initialize
         self.state_machine.set_state(StateType.STARTING)
 
     def update(self):
@@ -67,11 +72,11 @@ class FishingBot:
             loop_time = time.time() - loop_start
             sleep_time = max(0, self.target_delay - loop_time)
             if sleep_time > 0:
-                time.sleep(sleep_time)
+                self.sleep_or_stop(sleep_time)
 
     def stop(self):
         # Always show stats once
-        if not getattr(self, "_stats_shown", False):
+        if not self._stats_shown:
             self.stats.show()
             self._stats_shown = True
 
@@ -79,11 +84,17 @@ class FishingBot:
         if not self._stopped:
             self.log("[BOT] 🛑 Shutting down the bot...")
             self._stopped = True
+            self._stop_event.set()
 
             try:
                 self.controller.release_all_controls()
             except Exception as e:
                 self.log(f"[ERROR] Failed to release controls: {e}")
+
+    def sleep_or_stop(self, seconds: float) -> bool:
+        """Sleep for the given duration or return early if stop is requested.
+        Returns True if the bot was stopped during the wait, False otherwise."""
+        return self._stop_event.wait(timeout=seconds)
 
     def is_stopped(self):
         return self._stopped
