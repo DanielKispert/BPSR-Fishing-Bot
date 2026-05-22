@@ -1,23 +1,11 @@
 import random
-import re
 import time
 
-import pytesseract
 
 from ..bot_state import BotState
 from ..state_type import StateType
 from src.fishbot.config.detection_config import ROD_TEMPLATES
 
-
-def get_tension_percent(screenshot):
-    """Read the 'Tension XX%' value from the screenshot.
-    Returns the integer percentage (0-100) or None if not detected."""
-    roi = screenshot[820:880, 1000:1320]
-    text = pytesseract.image_to_string(roi, config='--psm 7 --oem 3')
-    match = re.search(r'\d+', text)
-    if match:
-        return int(match.group())
-    return None
 
 
 class PlayingMinigameState(BotState):
@@ -128,7 +116,7 @@ class PlayingMinigameState(BotState):
                 return StateType.PLAYING_MINIGAME
 
         # Tension management
-        tension = get_tension_percent(screen)
+        tension = self.detector.read_tension_percent(screen)
         if tension is not None and tension >= self.TENSION_THRESHOLD:
             self.bot.log(f"[MINIGAME] ⚠️ Tension {tension}% — releasing mouse")
             self.controller.mouse_up('left')

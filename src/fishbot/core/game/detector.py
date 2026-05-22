@@ -1,5 +1,6 @@
 import cv2 as cv
 import math
+import re
 import numpy as np
 import time
 from pathlib import Path
@@ -12,6 +13,12 @@ except ImportError:
     log("[ERROR] ❌ MSS library not found! Install with: pip install mss")
     log("[ERROR] The bot cannot run without MSS.")
     exit(1)
+
+try:
+    import pytesseract
+except ImportError:
+    log("[ERROR] ❌ pytesseract not found! Install with: pip install pytesseract")
+    pytesseract = None
 
 
 class Detector:
@@ -385,3 +392,25 @@ class Detector:
         confidence, location, scale = self._perform_match_multiscale(crop, template_data, template_name)
         return self._evaluate_match(confidence, location, scale, template_name, template_data, nat_x, nat_y, debug)
 
+    def read_tension_percent(self, screen):
+        """Read the 'Tension XX%' value from the screen via OCR.
+        Returns the integer percentage (0-100) or None if not detected."""
+        if self._scale_x is None or pytesseract is None:
+            return None
+
+        roi_config = self.detection_config.rois.get("tension_bar")
+        if not roi_config:
+            return None
+
+        ref_x, ref_y, ref_w, ref_h = roi_config
+        nat_x = int(ref_x * self._scale_x)
+        nat_y = int(ref_y * self._scale_y)
+        nat_w = int(ref_w * self._scale_x)
+        nat_h = int(ref_h * self._scale_y)
+
+        crop = screen[nat_y:nat_y + nat_h, nat_x:nat_x + nat_w]
+        text = pytesseract.image_to_string(crop, config='--psm 7 --oem 3')
+        match = re.search(r'\d+', text)
+        if match:
+            return int(match.group())
+        return None
