@@ -16,6 +16,7 @@ except ImportError:
 
 try:
     import pytesseract
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 except ImportError:
     log("[ERROR] ❌ pytesseract not found! Install with: pip install pytesseract")
     pytesseract = None
@@ -393,8 +394,11 @@ class Detector:
         return self._evaluate_match(confidence, location, scale, template_name, template_data, nat_x, nat_y, debug)
 
     def read_tension_percent(self, screen):
-        """Read the 'Tension XX%' value from the screen via OCR.
-        Returns the integer percentage (0-100) or None if not detected."""
+        """Read tension percentage from screen via OCR on the tension bar ROI.
+
+        @param screen: BGR screenshot array
+        @return: integer percentage (0-100), or None if not detected
+        """
         if self._scale_x is None or pytesseract is None:
             return None
 
@@ -403,14 +407,16 @@ class Detector:
             return None
 
         ref_x, ref_y, ref_w, ref_h = roi_config
-        nat_x = int(ref_x * self._scale_x)
-        nat_y = int(ref_y * self._scale_y)
-        nat_w = int(ref_w * self._scale_x)
-        nat_h = int(ref_h * self._scale_y)
+        final_x = int(ref_x * self._scale_x)
+        final_y = int(ref_y * self._scale_y)
+        final_w = int(ref_w * self._scale_x)
+        final_h = int(ref_h * self._scale_y)
 
-        crop = screen[nat_y:nat_y + nat_h, nat_x:nat_x + nat_w]
-        text = pytesseract.image_to_string(crop, config='--psm 7 --oem 3')
-        match = re.search(r'\d+', text)
+        crop = screen[final_y:final_y + final_h, final_x:final_x + final_w]
+        gray = cv.cvtColor(crop, cv.COLOR_BGR2GRAY)
+        text = pytesseract.image_to_string(gray, config='--psm 7 --oem 3')
+        match = re.search(r'(\d+)\s*%', text)
         if match:
-            return int(match.group())
+            return int(match.group(1))
         return None
+

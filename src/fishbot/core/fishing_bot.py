@@ -66,6 +66,10 @@ class FishingBot:
         loop_start = time.time()
 
         screen = self.detector.capture_screen()
+
+        if self._stopped:
+            return
+
         self.state_machine.handle(screen)
 
         if self.target_delay > 0:

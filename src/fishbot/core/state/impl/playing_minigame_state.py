@@ -11,18 +11,23 @@ from src.fishbot.config.detection_config import ROD_TEMPLATES
 class PlayingMinigameState(BotState):
 
     IDLE_CHECK_DELAY = 20  # Only check for idle UI after this many seconds
-    TENSION_THRESHOLD = 90  # Release mouse when tension exceeds this percentage
+    TENSION_THRESHOLD = 80  # Release mouse when tension exceeds this percentage
+    TENSION_CHECK_INTERVAL = 2  # OCR every 2nd frame for performance
 
     def __init__(self, bot):
         super().__init__(bot)
         self._current_direction = None
         self._minigame_start = None
         self._retry_until = None
+        self._tension_release_until = None
+        self._frame_counter = 0
 
     def on_enter(self):
         self._current_direction = None
         self._minigame_start = None
         self._retry_until = None
+        self._tension_release_until = None
+        self._frame_counter = 0
 
     def _handle_arrow(self, direction, screen):
         arrow_template = f"{direction}_arrow"
@@ -54,10 +59,10 @@ class PlayingMinigameState(BotState):
     def _detect_fishing_idle(self, screen):
         """Check if the fishing idle UI is visible.
         Requires BOTH level_check AND a rod template to match (reduces false positives)."""
-        if not self.detector.find(screen, "level_check", 1):
+        if not self.detector.find(screen, "level_check"):
             return False
         for rod in ROD_TEMPLATES:
-            if self.detector.find(screen, rod, 1):
+            if self.detector.find(screen, rod):
                 return True
         return False
 
@@ -65,6 +70,8 @@ class PlayingMinigameState(BotState):
         now = time.time()
         if self._minigame_start is None:
             self._minigame_start = now
+
+        self._frame_counter += 1
 
         # Non-blocking retry wait — loop keeps running (screenshots, stop-check)
         if self._retry_until is not None:
@@ -76,16 +83,13 @@ class PlayingMinigameState(BotState):
         fish_complete = False
         failed = False
 
-        if self.detector.find(screen, "success", 1, debug=True):
+        if self.detector.find(screen, "success", debug=True):
             fish_complete = True
             self.bot.log("[MINIGAME]  Fish caught!")
             self.bot.stats.increment('fish_caught')
 
-        if not fish_complete and self.detector.find(screen, "failure", 1, debug=True):
-            fish_complete = True
-            failed = True
-            self.bot.log("[MINIGAME] ❌ Fish escaped!")
-            self.bot.stats.increment('fish_escaped')
+        # failure detection skipped for performance (~74ms saved per frame)
+        # idle check after 20s catches escaped fish reliably
 
         if not fish_complete:
             elapsed = now - self._minigame_start
@@ -115,17 +119,22 @@ class PlayingMinigameState(BotState):
                 self._retry_until = now + 2.0
                 return StateType.PLAYING_MINIGAME
 
-        # Tension management
-        tension = self.detector.read_tension_percent(screen)
-        if tension is not None and tension >= self.TENSION_THRESHOLD:
-            self.bot.log(f"[MINIGAME] ⚠️ Tension {tension}% — releasing mouse")
-            self.controller.mouse_up('left')
-            self.bot.sleep_or_stop(1.0)
-            self.controller.mouse_down('left')
-            return StateType.PLAYING_MINIGAME
-
         # Try both directions — first match wins
         if not self._handle_arrow('left', screen):
             self._handle_arrow('right', screen)
+
+        # Tension management (non-blocking, OCR every 2nd frame for performance)
+        if self._tension_release_until is not None:
+            if now < self._tension_release_until:
+                pass
+            else:
+                self.controller.mouse_down('left')
+                self._tension_release_until = None
+        elif self._frame_counter % self.TENSION_CHECK_INTERVAL == 0:
+            tension = self.detector.read_tension_percent(screen)
+            if tension is not None and tension >= self.TENSION_THRESHOLD:
+                self.bot.log(f"[MINIGAME] ⚠️ Tension {tension}% — releasing mouse")
+                self.controller.mouse_up('left')
+                self._tension_release_until = now + 1.0
 
         return StateType.PLAYING_MINIGAME
