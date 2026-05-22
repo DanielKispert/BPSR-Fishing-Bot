@@ -76,4 +76,5 @@ class DetectionConfig:
             "shop_confirm": (700, 400, 500, 300),
             "shop_close": (1200, 150, 200, 100),
             "empty_bait_slot": (1300, 950, 150, 80),
+            "tension_bar": (1000, 820, 320, 60),
         }

@@ -13,8 +13,14 @@
 
 # BPSR Fishing Bot
 
-## This Project will not be updated by me anymore
-### The Reason is Simple, i'm no longer active on Blue Protocol. tks u all
+> Forked from [hyuse98/BPSR-Fishing-Bot](https://github.com/hyuse98/BPSR-Fishing-Bot) with these additions:
+>
+> *   **Tension management** — OCR-based detection of "Tension XX%" overlay; releases mouse at ≥ 90% to prevent fish escapes
+> *   **Auto-buy bait/rods** — new BUYING state with full shop flow (WIP)
+> *   **Detector improvements** — HSV tuning, windowed scaling, NaN/inf handling, JPG screenshots
+> *   **Minigame tuning** — improved arrow handling, idle detection, timing tweaks
+> *   **Logging** — rotating file logger and stats via logger
+> *   **Updated templates** — no_rod, continue, success, fish_size
 
 An automated and open-source fishing bot built in Python. It uses image detection to identify on-screen events and interact with a game's fishing minigame, automating the entire process.
 
