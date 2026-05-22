@@ -14,8 +14,8 @@ class DetectionConfig:
         # Templates that use HSV color masking instead of grayscale matching.
         # Format: (hue_low, sat_low, val_low, hue_high, sat_high, val_high)
         self.color_match_templates = {
-            "left_arrow": (5, 80, 80, 30, 255, 255),
-            "right_arrow": (5, 80, 80, 30, 255, 255),
+            "left_arrow": (0, 30, 80, 30, 255, 255),
+            "right_arrow": (0, 30, 80, 30, 255, 255),
         }
 
         self.templates_path = str(TEMPLATES_PATH)
@@ -58,8 +58,8 @@ class DetectionConfig:
             "broken_rod": (1597, 969, 284, 66),
             "no_rod": (1536, 978, 352, 70),
             "exclamation": (929, 438, 52, 142),
-            "left_arrow": (740, 490, 220, 100),
-            "right_arrow": (960, 490, 220, 100),
+            "left_arrow": (740, 490, 170, 100),
+            "right_arrow": (1010, 490, 170, 100),
             "failure": (973, 630, 702, 101),
             "success": (1422, 924, 337, 106),
             "continue": (1422, 924, 337, 106),

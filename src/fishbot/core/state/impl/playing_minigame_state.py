@@ -8,7 +8,7 @@ from src.fishbot.config.detection_config import ROD_TEMPLATES
 
 class PlayingMinigameState(BotState):
 
-    IDLE_CHECK_DELAY = 8  # Only check for idle UI after this many seconds
+    IDLE_CHECK_DELAY = 20  # Only check for idle UI after this many seconds
 
     def __init__(self, bot):
         super().__init__(bot)
@@ -36,7 +36,7 @@ class PlayingMinigameState(BotState):
 
         if self._current_direction is not None:
             # Switch: release old key first
-            self.bot.log(f"[MINIGAME] 🔄 Switching to {direction} ('{key_to_release}' → '{key_to_press}')")
+            self.bot.log(f"[MINIGAME]  Switching to {direction} ('{key_to_release}' → '{key_to_press}')")
             self.controller.key_up(key_to_release)
             # Micro-pause between key release and press (human-like)
             if self.bot.config.bot.anti_detection:
@@ -50,12 +50,11 @@ class PlayingMinigameState(BotState):
 
     def _detect_fishing_idle(self, screen):
         """Check if the fishing idle UI is visible.
-        Uses level_check (always present in fishing HUD) as primary indicator,
-        with rod templates as secondary confirmation."""
-        if self.detector.find(screen, "level_check", 5):
-            return True
+        Requires BOTH level_check AND a rod template to match (reduces false positives)."""
+        if not self.detector.find(screen, "level_check", 1):
+            return False
         for rod in ROD_TEMPLATES:
-            if self.detector.find(screen, rod, 5):
+            if self.detector.find(screen, rod, 1):
                 return True
         return False
 
@@ -76,7 +75,7 @@ class PlayingMinigameState(BotState):
 
         if self.detector.find(screen, "success", 1, debug=True):
             fish_complete = True
-            self.bot.log("[MINIGAME] 🐟 Fish caught!")
+            self.bot.log("[MINIGAME]  Fish caught!")
             self.bot.stats.increment('fish_caught')
 
         if not fish_complete and self.detector.find(screen, "failure", 1, debug=True):
@@ -109,7 +108,7 @@ class PlayingMinigameState(BotState):
                 else:
                     return StateType.FINISHING
             else:
-                self.bot.log("[MINIGAME] 🔄 Retrying...")
+                self.bot.log("[MINIGAME]  Retrying...")
                 self._retry_until = now + 2.0
                 return StateType.PLAYING_MINIGAME
 

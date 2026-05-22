@@ -1,4 +1,5 @@
 import cv2 as cv
+import math
 import numpy as np
 import time
 from pathlib import Path
@@ -16,6 +17,8 @@ except ImportError:
 class Detector:
     REFERENCE_WIDTH = 1920
     REFERENCE_HEIGHT = 1080
+    SCREENSHOT_EXT = ".jpg"
+    SCREENSHOT_PARAMS = [cv.IMWRITE_JPEG_QUALITY, 100]
 
     # Base scales - the dynamic reciprocal scale is added after first capture
     MATCH_SCALES_BASE = [1.6, 0.8, 1.0, 1.2]
@@ -48,6 +51,9 @@ class Detector:
         self._last_screenshot_time = 0
         self._screenshot_sequence = 0
         self._screenshot_dir = Path.cwd() / "logs" / "screenshots"
+        if self._screenshot_dir.exists():
+            for f in self._screenshot_dir.glob(f"*{self.SCREENSHOT_EXT}"):
+                f.unlink()
         self._screenshot_dir.mkdir(parents=True, exist_ok=True)
         self._max_screenshots = 1000
         self.screenshots_enabled = False  # Toggled via hotkey '6'
@@ -148,8 +154,8 @@ class Detector:
             timestamp = time.strftime("%H%M%S")
             millis = int((time.time_ns() // 1_000_000) % 1000)
             self._screenshot_sequence += 1
-            filepath = self._screenshot_dir / f"{prefix}_{timestamp}_{millis:03d}_{self._screenshot_sequence:06d}.png"
-            success = cv.imwrite(str(filepath), ref_img)
+            filepath = self._screenshot_dir / f"{prefix}_{timestamp}_{millis:03d}_{self._screenshot_sequence:06d}{self.SCREENSHOT_EXT}"
+            success = cv.imwrite(str(filepath), ref_img, self.SCREENSHOT_PARAMS)
 
             if success:
                 log(f"[DEBUG] 📸 Saved: {filepath}")
@@ -161,7 +167,7 @@ class Detector:
             log(f"[ERROR] 📸 Screenshot save failed: {type(e).__name__}: {e}")
 
     def _enforce_rolling_buffer(self):
-        files = sorted(self._screenshot_dir.glob("*.png"), key=lambda p: p.name)
+        files = sorted(self._screenshot_dir.glob(f"*{self.SCREENSHOT_EXT}"), key=lambda p: p.name)
         while len(files) > self._max_screenshots:
             files[0].unlink()
             files.pop(0)
@@ -171,8 +177,8 @@ class Detector:
         try:
             ref_img = self._resize_to_reference(screen)
             timestamp = time.strftime("%H%M%S")
-            filepath = self._screenshot_dir / f"timeout_{state_name}_{timestamp}.png"
-            cv.imwrite(str(filepath), ref_img)
+            filepath = self._screenshot_dir / f"timeout_{state_name}_{timestamp}{self.SCREENSHOT_EXT}"
+            cv.imwrite(str(filepath), ref_img, self.SCREENSHOT_PARAMS)
             log(f"[INFO] 📸 Timeout frame saved: {filepath.name}")
         except Exception as e:
             log(f"[ERROR] Timeout frame save failed: {e}")
@@ -232,8 +238,10 @@ class Detector:
                     (new_w, new_h), interpolation=interp
                 )
 
+            # Skip alpha mask for color-match templates: HSV binary mask already
+            # excludes background, and alpha on binary images causes inf/nan
             scaled_mask = None
-            if mask is not None:
+            if mask is not None and color_range is None:
                 scaled_mask = cv.resize(mask, (new_w, new_h), interpolation=interp)
 
             try:
@@ -242,7 +250,7 @@ class Detector:
             except cv.error:
                 continue
 
-            if confidence > best_confidence:
+            if not (math.isnan(confidence) or math.isinf(confidence)) and confidence > best_confidence:
                 best_confidence = confidence
                 best_location = location
                 best_scale = scale
@@ -320,6 +328,10 @@ class Detector:
         if confidence is None or location is None:
             return None
 
+        # HSV binary masks + alpha can produce inf/nan — reject these
+        if math.isnan(confidence) or math.isinf(confidence):
+            return None
+
         precision = self.detection_config.precision_overrides.get(template_name, self.detection_config.precision)
         is_match = confidence >= precision
 
@@ -372,3 +384,4 @@ class Detector:
         # Multi-scale matching against native crop
         confidence, location, scale = self._perform_match_multiscale(crop, template_data, template_name)
         return self._evaluate_match(confidence, location, scale, template_name, template_data, nat_x, nat_y, debug)
+
