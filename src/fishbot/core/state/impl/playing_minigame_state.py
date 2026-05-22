@@ -1,14 +1,29 @@
 import random
+import re
 import time
+
+import pytesseract
 
 from ..bot_state import BotState
 from ..state_type import StateType
 from src.fishbot.config.detection_config import ROD_TEMPLATES
 
 
+def get_tension_percent(screenshot):
+    """Read the 'Tension XX%' value from the screenshot.
+    Returns the integer percentage (0-100) or None if not detected."""
+    roi = screenshot[820:880, 1000:1320]
+    text = pytesseract.image_to_string(roi, config='--psm 7 --oem 3')
+    match = re.search(r'\d+', text)
+    if match:
+        return int(match.group())
+    return None
+
+
 class PlayingMinigameState(BotState):
 
     IDLE_CHECK_DELAY = 20  # Only check for idle UI after this many seconds
+    TENSION_THRESHOLD = 90  # Release mouse when tension exceeds this percentage
 
     def __init__(self, bot):
         super().__init__(bot)
@@ -111,6 +126,15 @@ class PlayingMinigameState(BotState):
                 self.bot.log("[MINIGAME]  Retrying...")
                 self._retry_until = now + 2.0
                 return StateType.PLAYING_MINIGAME
+
+        # Tension management
+        tension = get_tension_percent(screen)
+        if tension is not None and tension >= self.TENSION_THRESHOLD:
+            self.bot.log(f"[MINIGAME] ⚠️ Tension {tension}% — releasing mouse")
+            self.controller.mouse_up('left')
+            self.bot.sleep_or_stop(1.0)
+            self.controller.mouse_down('left')
+            return StateType.PLAYING_MINIGAME
 
         # Try both directions — first match wins
         if not self._handle_arrow('left', screen):
