@@ -10,7 +10,7 @@ from src.fishbot.config.detection_config import ROD_TEMPLATES
 
 class PlayingMinigameState(BotState):
 
-    IDLE_CHECK_DELAY = 20  # Only check for idle UI after this many seconds
+    IDLE_CHECK_DELAY = 60  # Only check for idle UI after this many seconds
     TENSION_THRESHOLD = 80  # Release mouse when tension exceeds this percentage
     TENSION_CHECK_INTERVAL = 2  # OCR every 2nd frame for performance
 
