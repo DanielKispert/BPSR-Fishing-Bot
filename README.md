@@ -68,7 +68,7 @@ Config file: `%LOCALAPPDATA%\FishBuddy\config.toml` (created on first launch).
 | Bot never casts | Set game to **1920×1080** in its Graphics settings |
 | Windows Defender removed the file | Restore from Protection History, add folder exclusion |
 | Bot misses bites | Lower `precision` from `0.65` to `0.55` |
-| Hotkeys don't respond | Change conflicting keys in `config.toml` |
+| Hotkeys don't respond | Hotkey customization planned for a future release |
 | High CPU usage | Set `target_fps = 20` in `[behavior]` |
 | OCR / tension bar not working | Install [Tesseract](https://github.com/UB-Mannheim/tesseract/wiki) and set `tesseract_path` |
 
