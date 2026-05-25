@@ -36,7 +36,7 @@ ShowLanguageDialog=no
 ; LicenseFile=..\LICENSE.rtf
 AlwaysRestart=no
 CloseApplications=yes
-CloseApplicationsFilter=*.exe
+CloseApplicationsFilter=FishBuddy.exe
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

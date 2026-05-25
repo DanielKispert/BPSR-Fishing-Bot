@@ -73,11 +73,11 @@ class Detector:
         if pytesseract is not None:
             ocr_cfg = getattr(self.unified_config, 'ocr', None)
             ocr_enabled = ocr_cfg.enabled if ocr_cfg is not None else True
-            config_path = ocr_cfg.tesseract_path if ocr_cfg is not None else 'auto'
+            executable_path = ocr_cfg.tesseract_path if ocr_cfg is not None else 'auto'
 
             if ocr_enabled:
                 from src.fishbot.utils.tesseract_finder import find_tesseract
-                tess_path = find_tesseract(config_path)
+                tess_path = find_tesseract(executable_path)
                 if tess_path:
                     pytesseract.pytesseract.tesseract_cmd = tess_path
                     self._pytesseract = pytesseract

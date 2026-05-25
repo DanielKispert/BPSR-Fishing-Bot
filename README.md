@@ -86,7 +86,7 @@ Config file: `%LOCALAPPDATA%\FishBuddy\config.toml` (created on first launch).
 ```bash
 git clone https://github.com/your-username/BPSR-Fishing-Bot.git
 cd BPSR-Fishing-Bot
-pip install -r requirements.txt
+pip install -e ".[dev]"
 python main.py
 ```
 

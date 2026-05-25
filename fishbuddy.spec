@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 
 ROOT = Path(SPECPATH)
-block_cipher = None
 
 added_datas = [
     (str(ROOT / "src" / "fishbot" / "assets" / "templates"), "assets/templates"),
@@ -25,7 +24,6 @@ hidden_imports = [
     "pynput.keyboard._win32",
     "pynput.mouse._win32",
     "keyboard._winkeyboard",
-    "PIL._imagingtk",
     "PIL.Image",
     "PIL.ImageGrab",
     "PyQt6.sip",
@@ -51,11 +49,10 @@ a = Analysis(
     excludes=excluded_modules,
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
-    cipher=block_cipher,
     noarchive=False,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure, a.zipped_data)
 
 exe = EXE(
     pyz,

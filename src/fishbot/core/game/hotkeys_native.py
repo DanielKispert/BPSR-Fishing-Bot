@@ -51,11 +51,8 @@ else:
     try:
         import keyboard as _keyboard_lib  # type: ignore[import]
         _HAS_KEYBOARD_LIB = True
-        log("[WARN] Win32 hotkeys unavailable on '%s'. "
-            "Falling back to 'keyboard' library (may need elevated privileges)." % sys.platform)
     except ImportError:
-        log("[ERROR] Neither Win32 hotkeys nor the 'keyboard' library is available. "
-            "Hotkeys will be DISABLED.")
+        pass
 
 
 class NativeHotkeys:
@@ -170,9 +167,12 @@ class NativeHotkeys:
         if IS_WINDOWS:
             self._run_win32()
         elif _HAS_KEYBOARD_LIB:
+            log("[WARN] Win32 hotkeys unavailable on '%s'. "
+                "Falling back to 'keyboard' library (may need elevated privileges)." % sys.platform)
             self._run_keyboard_fallback()
         else:
-            log("[ERROR] [HOTKEY] No hotkey backend available -- hotkeys are DISABLED.")
+            log("[ERROR] Neither Win32 hotkeys nor the 'keyboard' library is available. "
+                "Hotkeys will be DISABLED.")
 
     def _run_win32(self) -> None:
         """Win32 RegisterHotKey + GetMessage loop. Unregisters all keys on exit."""

@@ -17,6 +17,8 @@ except ImportError:
         raise ImportError("Install tomli for Python <3.11: pip install tomli")
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
+
+
 class StateTimeoutsConfig(BaseModel):
     starting: int = 10
     checking_rod: int = 15

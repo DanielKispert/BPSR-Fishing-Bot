@@ -16,7 +16,7 @@ echo [OK] Python %PYVER%
 echo Installing dependencies...
 python -m pip install --upgrade pip --quiet
 python -m pip install -r requirements.txt --quiet || (echo [ERROR] pip install failed. & exit /b 1)
-python -m pip install pyinstaller --upgrade --quiet || (echo [ERROR] PyInstaller install failed. & exit /b 1)
+python -m pip install "pyinstaller>=5.13,<7.0" --quiet || (echo [ERROR] PyInstaller install failed. & exit /b 1)
 echo [OK] Dependencies ready
 
 echo Building with PyInstaller...

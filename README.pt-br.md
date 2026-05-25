@@ -61,9 +61,9 @@ Um bot de pesca automatizado e de código aberto, construído em Python. Ele uti
     cd BPSR-Fishing-Bot
     ```
 
-2.  Instale as dependências a partir do `requirements.txt`:
+2.  Instale as dependências:
     ```bash
-    pip install -r requirements.txt
+    pip install -e ".[dev]"
     ```
 
 ### 3. Como Executar

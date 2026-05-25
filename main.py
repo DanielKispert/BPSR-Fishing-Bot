@@ -12,13 +12,15 @@ def main():
     log("[INFO] Hotkeys: F6=start, F9=start+debug, F7=pause, F8=emergency stop, "
         "F10=burst screenshots, F11=ROI visualiser.")
 
-    while not bot.is_stopped():
-        if not hotkeys.paused:
-            bot.update()
+    try:
+        while not bot.is_stopped():
+            if not hotkeys.paused:
+                bot.update()
 
-        bot.sleep_or_stop(0.05)
+            bot.sleep_or_stop(0.05)
+    finally:
+        hotkeys.shutdown()
 
-    hotkeys.shutdown()
     log("[INFO] Bot finished.")
 
 
