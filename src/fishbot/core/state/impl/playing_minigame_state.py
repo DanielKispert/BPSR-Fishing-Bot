@@ -10,7 +10,7 @@ from src.fishbot.config.detection_config import ROD_TEMPLATES
 
 class PlayingMinigameState(BotState):
 
-    IDLE_CHECK_DELAY = 60  # Only check for idle UI after this many seconds
+    IDLE_CHECK_DELAY = 20  # Only check for idle UI after this many seconds
     TENSION_THRESHOLD = 80  # Release mouse when tension exceeds this percentage
     TENSION_CHECK_INTERVAL = 2  # OCR every 2nd frame for performance
 
@@ -37,6 +37,8 @@ class PlayingMinigameState(BotState):
         arrow_found = self.detector.find(screen, arrow_template, debug=True)
         if not arrow_found:
             return False
+
+        self.bot.state_machine.notify_activity()
 
         if self._current_direction == direction:
             # Already holding the correct key
@@ -133,6 +135,7 @@ class PlayingMinigameState(BotState):
         elif self._frame_counter % self.TENSION_CHECK_INTERVAL == 0:
             tension = self.detector.read_tension_percent(screen)
             if tension is not None and tension >= self.TENSION_THRESHOLD:
+                self.bot.state_machine.notify_activity()
                 self.bot.log(f"[MINIGAME] ⚠️ Tension {tension}% — releasing mouse")
                 self.controller.mouse_up('left')
                 self._tension_release_until = now + 1.0

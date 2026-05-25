@@ -13,7 +13,7 @@ class BotConfig:
             StateType.CHECKING_ROD: 15,
             StateType.CASTING_BAIT: 15,
             StateType.WAITING_FOR_BITE: 25,
-            StateType.PLAYING_MINIGAME: 65,
+            StateType.PLAYING_MINIGAME: 30,
             StateType.FINISHING: 10,
             StateType.BUYING: 30,
         }
