@@ -81,6 +81,7 @@ class NativeHotkeys:
         self._stop_event: threading.Event = threading.Event()
         self._win32_thread_id: Optional[int] = None
 
+        # TODO: Make hotkeys configurable via config.toml (HotkeysConfig not yet wired up)
         cfg = hotkeys_config or {}
         self._key_bindings: Dict[str, str] = {
             'start':       cfg.get('start',       'F6'),

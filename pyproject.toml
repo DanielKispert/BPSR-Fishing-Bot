@@ -30,7 +30,7 @@ dev = [
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.backends.legacy:build"
 
-# PyInstaller packaging is driven by fishbuddy.spec (not yet committed).
+# PyInstaller packaging is driven by fishbuddy.spec; see fishbuddy.spec for build config.
 # To build the release bundle, run:
 #   pyinstaller fishbuddy.spec
 # or use the provided build.bat script.

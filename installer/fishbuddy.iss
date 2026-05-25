@@ -5,8 +5,8 @@
 #define AppVersion "1.0.0"
 #define AppName    "FishBuddy"
 #define AppPublisher "BPSR"
-#define AppURL       "https://github.com/BPSR/FishBuddy"
-#define AppSupportURL "https://github.com/BPSR/FishBuddy/issues"
+#define AppURL       "https://github.com/DanielKispert/BPSR-Fishing-Bot"
+#define AppSupportURL "https://github.com/DanielKispert/BPSR-Fishing-Bot/issues"
 #define AppExeName "FishBuddy.exe"
 
 [Setup]
@@ -56,18 +56,18 @@ Name: "{autodesktop}\{#AppName}";     Filename: "{app}\{#AppExeName}"; Tasks: de
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName} now"; Flags: nowait postinstall skipifsilent
 
-[UninstallDelete]
-Type: filesandordirs; Name: "{localappdata}\{#AppName}"
-
 [Code]
-procedure InitializeUninstallProgressForm();
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
-  if MsgBox(
-    'Delete your saved FishBuddy configuration?' + #13#10 +
-    '(' + ExpandConstant('{localappdata}\{#AppName}') + ')' + #13#10#13#10 +
-    'Yes = remove config files. No = keep them.',
-    mbConfirmation, MB_YESNO) = IDNO then
-    Log('User kept configuration files.')
-  else
-    Log('User deleted configuration files.');
+  if CurUninstallStep = usPostUninstall then
+  begin
+    if MsgBox(
+      'Delete your saved FishBuddy settings?' + #13#10 +
+      '(' + ExpandConstant('{localappdata}\{#AppName}\config.toml') + ')' + #13#10#13#10 +
+      'Yes = remove settings. No = keep them.',
+      mbConfirmation, MB_YESNO) = IDYES then
+    begin
+      DelTree(ExpandConstant('{localappdata}\{#AppName}'), True, True, True);
+    end;
+  end;
 end;

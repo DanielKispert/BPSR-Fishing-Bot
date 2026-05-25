@@ -9,8 +9,8 @@ python --version >nul 2>&1 || (echo [ERROR] Python not found on PATH. & exit /b 
 
 for /f "tokens=2 delims= " %%v in ('python --version 2^>^&1') do set PYVER=%%v
 for /f "tokens=1,2 delims=." %%a in ("%PYVER%") do (set PY_MAJOR=%%a & set PY_MINOR=%%b)
-if %PY_MAJOR% LSS 3 (echo [ERROR] Python 3.10+ required. Found %PYVER%. & exit /b 1)
-if %PY_MAJOR% EQU 3 if %PY_MINOR% LSS 10 (echo [ERROR] Python 3.10+ required. Found %PYVER%. & exit /b 1)
+if %PY_MAJOR% LSS 3 (echo [ERROR] Python 3.9+ required. Found %PYVER%. & exit /b 1)
+if %PY_MAJOR% EQU 3 if %PY_MINOR% LSS 9 (echo [ERROR] Python 3.9+ required. Found %PYVER%. & exit /b 1)
 echo [OK] Python %PYVER%
 
 echo Installing dependencies...

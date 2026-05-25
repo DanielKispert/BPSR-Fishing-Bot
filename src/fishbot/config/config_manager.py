@@ -17,14 +17,6 @@ except ImportError:
         raise ImportError("Install tomli for Python <3.11: pip install tomli")
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
-
-
-class HotkeysConfig(BaseModel):
-    start_stop: str = "f9"
-    pause: str = "f10"
-    emergency_stop: str = "f11"
-
-
 class StateTimeoutsConfig(BaseModel):
     starting: int = 10
     checking_rod: int = 15
@@ -89,7 +81,6 @@ class OcrConfig(BaseModel):
 
 
 class AppConfig(BaseModel):
-    hotkeys: HotkeysConfig = Field(default_factory=HotkeysConfig)
     behavior: BehaviorConfig = Field(default_factory=BehaviorConfig)
     detection: DetectionTomlConfig = Field(default_factory=DetectionTomlConfig)
     screen: ScreenTomlConfig = Field(default_factory=ScreenTomlConfig)

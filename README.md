@@ -37,7 +37,7 @@ Watches your screen, detects bites, and plays the fishing minigame automatically
 | **F10** | Toggle burst screenshots |
 | **F11** | Toggle ROI visualiser |
 
-Hotkeys work globally. All keys can be changed in the config file.
+Hotkeys work globally.
 
 ---
 
@@ -47,9 +47,11 @@ Config file: `%LOCALAPPDATA%\FishBuddy\config.toml` (created on first launch).
 
 | Setting | Section | Default | What it does |
 |---------|---------|---------|-------------|
-| `start_stop` | `[hotkeys]` | `"f6"` | Start/stop key |
-| `pause` | `[hotkeys]` | `"f7"` | Pause/resume key |
-| `emergency_stop` | `[hotkeys]` | `"f8"` | Immediate stop key |
+| `anti_detection` | `[behavior]` | `true` | Random delays and mouse jitter |
+| `casting_delay` | `[behavior]` | `0.5` | Seconds to wait before each cast |
+| `target_fps` | `[behavior]` | `0` | Detection loop speed (0 = unlimited) |
+| `precision` | `[detection]` | `0.65` | Match confidence threshold (0.0–1.0) |
+| `tesseract_path` | `[ocr]` | `"auto"` | Tesseract path ("auto" = bundled in release) |
 | `anti_detection` | `[behavior]` | `true` | Random delays and mouse jitter |
 | `casting_delay` | `[behavior]` | `0.5` | Seconds to wait before each cast |
 | `target_fps` | `[behavior]` | `0` | Detection loop speed (0 = unlimited) |

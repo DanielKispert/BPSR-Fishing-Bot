@@ -3,8 +3,7 @@
 from __future__ import annotations
 import sys
 from pathlib import Path
-
-
+ 
 
 def resource_path(relative_path: str | Path) -> Path:
     """Return absolute path to a bundled resource (dev or frozen mode)."""
@@ -16,11 +15,9 @@ def resource_path(relative_path: str | Path) -> Path:
     return (base / relative_path).resolve()
 
 
-
 def config_path(filename: str = "default_config.toml") -> Path:
     """Shortcut for config/ bundle folder."""
     return resource_path(f"config/{filename}")
-
 
 
 def template_path(filename: str) -> Path:

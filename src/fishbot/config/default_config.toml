@@ -1,10 +1,5 @@
 # FishBuddy defaults -- place config.toml in %LOCALAPPDATA%\FishBuddy\ to override
 
-[hotkeys]
-start_stop = "f9"       # start/stop
-pause = "f10"           # pause/resume
-emergency_stop = "f11"  # immediate stop
-
 [behavior]
 anti_detection = true        # random delays + mouse jitter
 mouse_jitter = 3             # +-N pixel jitter
