@@ -76,6 +76,20 @@ Um bot de pesca automatizado e de código aberto, construído em Python. Ele uti
     ```
 4.  O bot estará pronto. Pressione **F6** para iniciar, **F7** para pausar e **F8** para encerrar o bot a qualquer momento.
 
+
+### Teclas de Atalho
+
+| Tecla | Ação |
+|-------|------|
+| **F6** | Iniciar (modo normal) |
+| **F7** | Pausar |
+| **F8** | Parar de emergência |
+| **F9** | Iniciar em modo debug (capturas de tela) |
+| **F10** | Alternar capturas em burst |
+| **F11** | Alternar visualizador de ROI |
+
+As teclas de atalho funcionam globalmente.
+
 ---
 
 ## Problemas Conhecidos e Soluções
