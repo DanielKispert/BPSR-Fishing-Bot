@@ -238,6 +238,7 @@ class NativeHotkeys:
             return
         self._stop_event.set()
         if IS_WINDOWS and self._win32_thread_id is not None:
-            _user32.PostThreadMessageW(self._win32_thread_id, WM_QUIT, 0, 0)
+            if self._thread and self._thread.is_alive():
+                _user32.PostThreadMessageW(self._win32_thread_id, WM_QUIT, 0, 0)
         self._thread.join(timeout=2.0)
         log("[INFO] [HOTKEY] Shutdown complete.")

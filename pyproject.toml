@@ -17,7 +17,8 @@ dependencies = [
     "pywinctl>=0.4",
     "pytesseract~=0.3.13",
     "pydantic>=2.0,<3.0",
-    "tomli>=1.1.0; python_version < '3.11'",
+    "tomli>=1.1.0; python_version < '3.11',",
+    "pynput>=1.7,<2.0",
 ]
 
 [project.optional-dependencies]

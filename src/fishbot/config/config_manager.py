@@ -7,6 +7,7 @@ import platform
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
+import threading
 
 try:
     import tomllib
@@ -103,18 +104,24 @@ def _deep_merge(base: dict, override: dict) -> dict:
 def _get_user_config_paths() -> List[Path]:
     """Return candidate user-config paths in ascending priority order."""
     paths: List[Path] = []
+    if not getattr(sys, "frozen", False):
+        # Dev mode: check cwd first (lowest priority)
+        paths.append(Path.cwd() / "config.toml")
     if platform.system() == "Windows":
         local_app_data = os.environ.get("LOCALAPPDATA")
         if local_app_data:
             paths.append(Path(local_app_data) / "FishBuddy" / "config.toml")
     if getattr(sys, "frozen", False):
+        # Frozen: config next to exe (highest priority for portable mode)
         paths.append(Path(sys.executable).parent / "config.toml")
-    paths.append(Path.cwd() / "config.toml")
     return paths
 
 
 def _load_config() -> AppConfig:
-    default_path = Path(__file__).parent / "default_config.toml"
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        default_path = Path(sys._MEIPASS) / "config" / "default_config.toml"
+    else:
+        default_path = Path(__file__).parent / "default_config.toml"
     with open(default_path, "rb") as fh:
         merged: dict = tomllib.load(fh)
     for user_path in _get_user_config_paths():
@@ -129,6 +136,7 @@ def _load_config() -> AppConfig:
         raise SystemExit("Configuration Error:\n" + "\n".join(lines) + "\nCheck your config.toml.") from exc
 
 
+_config_lock = threading.Lock()
 _config_instance: Optional[AppConfig] = None
 
 
@@ -136,7 +144,9 @@ def get_config() -> AppConfig:
     """Return the validated AppConfig singleton (loaded lazily)."""
     global _config_instance
     if _config_instance is None:
-        _config_instance = _load_config()
+        with _config_lock:
+            if _config_instance is None:  # double-check
+                _config_instance = _load_config()
     return _config_instance
 
 

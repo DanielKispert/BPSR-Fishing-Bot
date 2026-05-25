@@ -10,8 +10,8 @@ def resource_path(relative_path: str | Path) -> Path:
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         base = Path(sys._MEIPASS)
     else:
-        # src/fishbot/utils/ -> project root is 4 levels up
-        base = Path(__file__).resolve().parent.parent.parent.parent
+        # src/fishbot/utils/ -> src/fishbot/ is 2 levels up
+        base = Path(__file__).resolve().parent.parent
     return (base / relative_path).resolve()
 
 

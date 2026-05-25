@@ -30,8 +30,8 @@ Watches your screen, detects bites, and plays the fishing minigame automatically
 
 | Key | Action |
 |-----|--------|
-| **F6** | Start / Stop |
-| **F7** | Pause / Resume |
+| **F6** | Start (normal mode) |
+| **F7** | Pause |
 | **F8** | Emergency stop |
 | **F9** | Start in debug mode (screenshots) |
 | **F10** | Toggle burst screenshots |
@@ -43,7 +43,7 @@ Hotkeys work globally.
 
 ## ⚙️ Settings
 
-Config file: `%LOCALAPPDATA%\FishBuddy\config.toml` (created on first launch).
+Config file: `%LOCALAPPDATA%\FishBuddy\config.toml` (create manually to override defaults).
 
 | Setting | Section | Default | What it does |
 |---------|---------|---------|-------------|
@@ -51,12 +51,7 @@ Config file: `%LOCALAPPDATA%\FishBuddy\config.toml` (created on first launch).
 | `casting_delay` | `[behavior]` | `0.5` | Seconds to wait before each cast |
 | `target_fps` | `[behavior]` | `0` | Detection loop speed (0 = unlimited) |
 | `precision` | `[detection]` | `0.65` | Match confidence threshold (0.0–1.0) |
-| `tesseract_path` | `[ocr]` | `"auto"` | Tesseract path ("auto" = bundled in release) |
-| `anti_detection` | `[behavior]` | `true` | Random delays and mouse jitter |
-| `casting_delay` | `[behavior]` | `0.5` | Seconds to wait before each cast |
-| `target_fps` | `[behavior]` | `0` | Detection loop speed (0 = unlimited) |
-| `precision` | `[detection]` | `0.65` | Match confidence threshold (0.0–1.0) |
-| `tesseract_path` | `[ocr]` | `"auto"` | Tesseract path ("auto" = bundled in release) |
+| `tesseract_path` | `[ocr]` | `"auto"` | Tesseract path ("auto" = auto-detected) |
 
 ---
 
@@ -84,7 +79,7 @@ Config file: `%LOCALAPPDATA%\FishBuddy\config.toml` (created on first launch).
 **Requirements:** Python 3.9+, Git
 
 ```bash
-git clone https://github.com/your-username/BPSR-Fishing-Bot.git
+git clone https://github.com/DanielKispert/BPSR-Fishing-Bot.git
 cd BPSR-Fishing-Bot
 pip install -e ".[dev]"
 python main.py
@@ -113,6 +108,8 @@ FSM: `STARTING → CHECKING_ROD → CASTING_BAIT → WAITING_FOR_BITE → PLAYIN
 </details>
 
 ---
+
+> 📝 [Leia em Português](README.pt-br.md)
 
 ## ⚠️ Disclaimer
 
