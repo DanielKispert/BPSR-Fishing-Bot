@@ -16,7 +16,6 @@ except ImportError:
 
 try:
     import pytesseract
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 except ImportError:
     log("[ERROR] ❌ pytesseract not found! Install with: pip install pytesseract")
     pytesseract = None
@@ -68,6 +67,27 @@ class Detector:
         self.burst_screenshots_enabled = False  # Toggled via hotkey '0' and takes priority
         self.screenshot_interval = 1.0  # Seconds between debug screenshots (adjusted per state)
         log(f"[INFO] 📸 Screenshots will be saved to: {self._screenshot_dir}")
+
+        # Set up Tesseract for OCR (tension bar reading)
+        self._pytesseract = None
+        if pytesseract is not None:
+            ocr_cfg = getattr(self.unified_config, 'ocr', None)
+            ocr_enabled = ocr_cfg.enabled if ocr_cfg is not None else True
+            executable_path = ocr_cfg.tesseract_path if ocr_cfg is not None else 'auto'
+
+            if ocr_enabled:
+                from src.fishbot.utils.tesseract_finder import find_tesseract
+                tess_path = find_tesseract(executable_path)
+                if tess_path:
+                    pytesseract.pytesseract.tesseract_cmd = tess_path
+                    self._pytesseract = pytesseract
+                    log(f"[INFO] ✅ Tesseract found: {tess_path}")
+                else:
+                    log("[WARN] ⚠️  Tesseract not found — OCR (tension detection) is disabled.")
+                    log("[WARN]    Install Tesseract: https://github.com/UB-Mannheim/tesseract/wiki")
+                    log("[WARN]    Or set ocr.tesseract_path in your config.toml")
+            else:
+                log("[INFO] ℹ️  OCR disabled via config (ocr.enabled = false)")
 
     def _load_templates(self):
         loaded = {}
@@ -399,7 +419,7 @@ class Detector:
         @param screen: BGR screenshot array
         @return: integer percentage (0-100), or None if not detected
         """
-        if self._scale_x is None or pytesseract is None:
+        if self._scale_x is None or self._pytesseract is None:
             return None
 
         roi_config = self.detection_config.rois.get("tension_bar")
@@ -414,9 +434,8 @@ class Detector:
 
         crop = screen[final_y:final_y + final_h, final_x:final_x + final_w]
         gray = cv.cvtColor(crop, cv.COLOR_BGR2GRAY)
-        text = pytesseract.image_to_string(gray, config='--psm 7 --oem 3')
+        text = self._pytesseract.image_to_string(gray, config='--psm 7 --oem 3')
         match = re.search(r'(\d+)\s*%', text)
         if match:
             return int(match.group(1))
         return None
-

@@ -40,7 +40,7 @@ Um bot de pesca automatizado e de código aberto, construído em Python. Ele uti
 *   **Pesca Totalmente Automatizada:** Lança a isca, detecta a fisgada e inicia o minigame.
 *   **Minigame Player Inteligente:** Joga o minigame de forma autônoma, movendo para a esquerda e para a direita conforme necessário.
 *   **Troca Automática de Vara:** Detecta quando a vara de pescar quebra e a substitui por uma nova, permitindo sessões de pesca ininterruptas.
-*   **Controle por Hotkeys:** Inicie, pause, retome e encerre o bot facilmente usando teclas de atalho (**7** para iniciar/pausar e **8** para parar).
+*   **Controle por Hotkeys:** Inicie, pause, retome e encerre o bot facilmente usando teclas de atalho (**F6** para iniciar, **F7** para pausar e **F8** para parar de emergência).
 *   **Configuração Flexível:** Permite ajustar facilmente a precisão da detecção, as regiões de interesse (ROI) e os tempos de espera através de arquivos de configuração dedicados.
 *   **Arquitetura Robusta:** Construído com uma máquina de estados e princípios de design sólidos, tornando o código fácil de entender e estender.
 
@@ -61,9 +61,9 @@ Um bot de pesca automatizado e de código aberto, construído em Python. Ele uti
     cd BPSR-Fishing-Bot
     ```
 
-2.  Instale as dependências a partir do `requirements.txt`:
+2.  Instale as dependências:
     ```bash
-    pip install -r requirements.txt
+    pip install -e ".[dev]"
     ```
 
 ### 3. Como Executar
@@ -74,7 +74,21 @@ Um bot de pesca automatizado e de código aberto, construído em Python. Ele uti
     ```bash
     python main.py
     ```
-4.  O bot estará pronto. Pressione **7** para iniciar/pausar e **8** para encerrar o bot a qualquer momento.
+4.  O bot estará pronto. Pressione **F6** para iniciar, **F7** para pausar e **F8** para encerrar o bot a qualquer momento.
+
+
+### Teclas de Atalho
+
+| Tecla | Ação |
+|-------|------|
+| **F6** | Iniciar (modo normal) |
+| **F7** | Pausar |
+| **F8** | Parar de emergência |
+| **F9** | Iniciar em modo debug (capturas de tela) |
+| **F10** | Alternar capturas em burst |
+| **F11** | Alternar visualizador de ROI |
+
+As teclas de atalho funcionam globalmente.
 
 ---
 

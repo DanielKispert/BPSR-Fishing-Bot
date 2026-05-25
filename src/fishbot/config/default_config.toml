@@ -1,0 +1,102 @@
+# FishBuddy defaults -- place config.toml in %LOCALAPPDATA%\FishBuddy\ to override
+
+[behavior]
+anti_detection = true        # random delays + mouse jitter
+mouse_jitter = 3             # +-N pixel jitter
+delay_variance = 0.2         # +-20% timing variance
+casting_delay_variance = 0.15
+casting_delay = 0.5          # seconds before casting
+quick_finish_enabled = false
+debug_mode = false
+target_fps = 0               # 0 = unlimited; set 15-30 to save CPU
+
+[behavior.state_timeouts]  # seconds before a stuck state is restarted
+starting         = 10
+checking_rod     = 15
+casting_bait     = 15
+waiting_for_bite = 25
+playing_minigame = 65
+finishing        = 10
+buying           = 30
+
+[behavior.auto_buy]
+enabled = false      # auto-buy supplies when empty
+quantity = 20
+bait_type = "cheap"  # "cheap" or "special"
+
+[detection]
+precision = 0.65  # template match confidence 0.0-1.0
+
+[detection.precision_overrides]  # per-template overrides (optional)
+
+[detection.templates]
+fishing_spot_btn    = "fishing_spot_btn.png"
+reg_rod             = "reg_pole.png"
+sturdy_rod          = "sturdy_pole.png"
+flex_rod            = "flex_pole.png"
+broken_rod          = "broken_rod.png"
+no_rod              = "no_rod.png"
+exclamation         = "exclamation.png"
+left_arrow          = "left_arrow.png"
+right_arrow         = "right_arrow.png"
+failure             = "fish_escaped.png"
+success             = "success.png"
+continue            = "continue.png"
+level_check         = "level_check.png"
+connect_server      = "connect.png"
+shop_icon           = "shop_icon.png"
+shop_rod_tab        = "shop_rod_tab.png"
+shop_bait_tab       = "shop_bait_tab.png"
+shop_bait_cheap_tab = "shop_bait_cheap_tab.png"
+shop_quantity       = "shop_quantity.png"
+shop_buy_btn        = "shop_buy_btn.png"
+shop_ok_btn         = "shop_ok_btn.png"
+shop_confirm        = "shop_confirm.png"
+shop_close          = "shop_close.png"
+empty_bait_slot     = "empty_bait_slot.png"
+
+[detection.color_match_templates]  # HSV ranges [h_lo, s_lo, v_lo, h_hi, s_hi, v_hi]
+left_arrow  = [0, 30, 80, 30, 255, 255]
+right_arrow = [0, 30, 80, 30, 255, 255]
+
+[detection.rois]  # [x, y, w, h] in 1920x1080 reference coords
+fishing_spot_btn    = [1400, 540,  121,  55]
+reg_rod             = [1598, 970,  290,  63]
+sturdy_rod          = [1597, 969,  274,  67]
+flex_rod            = [1597, 969,  284,  66]
+broken_rod          = [1597, 969,  284,  66]
+no_rod              = [1536, 978,  352,  70]
+exclamation         = [ 929, 438,   52, 142]
+left_arrow          = [ 740, 490,  170, 100]
+right_arrow         = [1010, 490,  170, 100]
+failure             = [ 973, 630,  702, 101]
+success             = [1422, 924,  337, 106]
+continue            = [1422, 924,  337, 106]
+level_check         = [1101, 985,   48,  29]
+connect_server      = [1057, 763,  279,  67]
+shop_icon           = [ 400, 200, 1120, 680]
+shop_rod_tab        = [ 400, 200,  600, 400]
+shop_bait_tab       = [ 400, 200,  600, 400]
+shop_bait_cheap_tab = [ 400, 200,  600, 400]
+shop_quantity       = [ 700, 400,  500, 200]
+shop_buy_btn        = [ 800, 600,  400, 200]
+shop_ok_btn         = [ 700, 400,  500, 200]
+shop_confirm        = [ 700, 400,  500, 300]
+shop_close          = [1200, 150,  200, 100]
+empty_bait_slot     = [1300, 950,  150,  80]
+tension_bar         = [1000, 820,  320,  60]
+
+[screen]
+game_window_title = "Blue Protocol: Star Resonance"
+reference_width  = 1920
+reference_height = 1080
+
+[screen.windowed_offsets]  # OS window decoration adjustments
+top    = 32
+left   = 8
+width  = 16
+height = 39
+
+[ocr]
+enabled = true
+tesseract_path = "auto"  # "auto" or explicit e.g. "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
