@@ -198,6 +198,8 @@ class NativeHotkeys:
 
         msg = _MSG()
         while True:
+            if self._stop_event.is_set():
+                break
             result = _user32.GetMessage(ctypes.byref(msg), None, 0, 0)
             if result <= 0:
                 break
@@ -237,7 +239,7 @@ class NativeHotkeys:
         if self._stop_event.is_set():
             return
         self._stop_event.set()
-        if IS_WINDOWS and self._win32_thread_id is not None:
+        if IS_WINDOWS and self._win32_thread_id:
             if self._thread and self._thread.is_alive():
                 _user32.PostThreadMessageW(self._win32_thread_id, WM_QUIT, 0, 0)
         self._thread.join(timeout=2.0)

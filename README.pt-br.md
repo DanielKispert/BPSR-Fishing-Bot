@@ -40,7 +40,7 @@ Um bot de pesca automatizado e de código aberto, construído em Python. Ele uti
 *   **Pesca Totalmente Automatizada:** Lança a isca, detecta a fisgada e inicia o minigame.
 *   **Minigame Player Inteligente:** Joga o minigame de forma autônoma, movendo para a esquerda e para a direita conforme necessário.
 *   **Troca Automática de Vara:** Detecta quando a vara de pescar quebra e a substitui por uma nova, permitindo sessões de pesca ininterruptas.
-*   **Controle por Hotkeys:** Inicie, pause, retome e encerre o bot facilmente usando teclas de atalho (**7** para iniciar/pausar e **8** para parar).
+*   **Controle por Hotkeys:** Inicie, pause, retome e encerre o bot facilmente usando teclas de atalho (**F6** para iniciar, **F7** para pausar e **F8** para parar de emergência).
 *   **Configuração Flexível:** Permite ajustar facilmente a precisão da detecção, as regiões de interesse (ROI) e os tempos de espera através de arquivos de configuração dedicados.
 *   **Arquitetura Robusta:** Construído com uma máquina de estados e princípios de design sólidos, tornando o código fácil de entender e estender.
 
@@ -74,7 +74,7 @@ Um bot de pesca automatizado e de código aberto, construído em Python. Ele uti
     ```bash
     python main.py
     ```
-4.  O bot estará pronto. Pressione **7** para iniciar/pausar e **8** para encerrar o bot a qualquer momento.
+4.  O bot estará pronto. Pressione **F6** para iniciar, **F7** para pausar e **F8** para encerrar o bot a qualquer momento.
 
 ---
 

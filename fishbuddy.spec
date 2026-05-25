@@ -52,7 +52,7 @@ a = Analysis(
     noarchive=False,
 )
 
-pyz = PYZ(a.pure, a.zipped_data)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,

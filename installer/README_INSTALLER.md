@@ -1,6 +1,6 @@
 # Building the FishBuddy Installer
 
-**Requirements:** Python 3.10+, Inno Setup 6.3+ (https://jrsoftware.org/isdl.php)
+**Requirements:** Python 3.9+, Inno Setup 6.3+ (https://jrsoftware.org/isdl.php)
 
 ## Step 1 -- Build the app
 

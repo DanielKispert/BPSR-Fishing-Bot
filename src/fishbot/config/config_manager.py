@@ -153,4 +153,5 @@ def get_config() -> AppConfig:
 def reset_config() -> None:
     """Force config reload on next get_config() call."""
     global _config_instance
-    _config_instance = None
+    with _config_lock:
+        _config_instance = None
