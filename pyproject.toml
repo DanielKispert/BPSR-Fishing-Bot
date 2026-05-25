@@ -1,6 +1,6 @@
 [project]
 # Install: pip install -e .    Dev: pip install -e ".[dev]"
-name = "fishbuddy"
+name = "bpsr-fishing-bot"
 version = "1.0.0"
 description = "Automated fishing bot for Blue Protocol: Star Resonance"
 readme = "README.md"
@@ -41,7 +41,7 @@ build-backend = "setuptools.backends.legacy:build"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"fishbuddy" = [
+"fishbot" = [
     "config/default_config.toml",
     "assets/templates/*.png",
 ]

@@ -16,8 +16,8 @@
 > *   **Logging** — rotating file logger and stats via logger
 > *   **Updated templates** — no_rod, continue, success, fish_size
 > *   **Global hotkeys** — F6–F11 control the bot from any window
-> *   **TOML configuration** — persistent user settings via `%LOCALAPPDATA%\FishBuddy\config.toml`
-> *   **Installer** — packaged as a Windows installer (`FishBuddy-Setup-x.x.x.exe`) for end users
+> *   **TOML configuration** — persistent user settings via `%LOCALAPPDATA%\BPSR-Fishing-Bot\config.toml`
+> *   **Installer** — packaged as a Windows installer (`BPSR-Fishing-Bot-Setup-x.x.x.exe`) for end users
 
 An automated and open-source fishing bot built in Python. It uses image detection to identify on-screen events and interact with a game's fishing minigame, automating the entire process.
 
@@ -46,7 +46,7 @@ An automated and open-source fishing bot built in Python. It uses image detectio
 *   **Tension Management:** Monitors the "Tension XX%" overlay via OCR; releases mouse at ≥ 90% to prevent fish escapes.
 *   **Automatic Rod Swapping:** Detects when the fishing rod breaks and replaces it, allowing for uninterrupted fishing sessions.
 *   **Global Hotkey Control:** Start, pause, resume, and stop the bot from any window using F6–F11.
-*   **Persistent Configuration:** User settings stored in `%LOCALAPPDATA%\FishBuddy\config.toml` — survive updates.
+ *   **Persistent Configuration:** User settings stored in `%LOCALAPPDATA%\BPSR-Fishing-Bot\config.toml` — survive updates.
 *   **Robust Architecture:** Built with a state machine and solid design principles, making the code easy to understand and extend.
 
 ---
@@ -62,7 +62,7 @@ An automated and open-source fishing bot built in Python. It uses image detectio
 
 #### Option A — Installer (recommended for end users)
 
-1.  Go to the [**Releases page**](../../releases/latest) and download `FishBuddy-Setup-x.x.x.exe`.
+ 1.  Go to the [**Releases page**](../../releases/latest) and download `BPSR-Fishing-Bot-Setup-x.x.x.exe`.
 2.  Run the installer (Next → Install → Finish). No Python required.
 
 #### Option B — From source
@@ -82,7 +82,7 @@ An automated and open-source fishing bot built in Python. It uses image detectio
 
 1.  Open the game and make sure it is visible on the screen.
 2.  Be at a fishing location. Either stand on an interactable fishing spot or already in the fishing UI.
-3.  If using the installer, launch **FishBuddy** from the desktop shortcut. If running from source:
+ 3.  If using the installer, launch **BPSR Fishing Bot** from the desktop shortcut. If running from source:
     ```bash
     python main.py
     ```
@@ -131,7 +131,7 @@ This section lists common issues you might encounter and how to solve them.
 
 ## Configuration
 
-User settings are stored in `%LOCALAPPDATA%\FishBuddy\config.toml`. Create this file manually to override defaults. You can find `src/fishbot/config/default_config.toml` as a reference for all available options.
+User settings are stored in `%LOCALAPPDATA%\BPSR-Fishing-Bot\config.toml`. Create this file manually to override defaults. You can find `src/fishbot/config/default_config.toml` as a reference for all available options.
 
 #### `[behavior]`
 General bot behaviour.

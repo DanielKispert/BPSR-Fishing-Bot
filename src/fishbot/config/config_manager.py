@@ -1,4 +1,4 @@
-"""FishBuddy configuration: loads and validates TOML files with priority merging."""
+"""BPSR Fishing Bot configuration: loads and validates TOML files with priority merging."""
 
 from __future__ import annotations
 
@@ -110,7 +110,7 @@ def _get_user_config_paths() -> List[Path]:
     if platform.system() == "Windows":
         local_app_data = os.environ.get("LOCALAPPDATA")
         if local_app_data:
-            paths.append(Path(local_app_data) / "FishBuddy" / "config.toml")
+            paths.append(Path(local_app_data) / "BPSR-Fishing-Bot" / "config.toml")
     if getattr(sys, "frozen", False):
         # Frozen: config next to exe (highest priority for portable mode)
         paths.append(Path(sys.executable).parent / "config.toml")

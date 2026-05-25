@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 cd /d "%~dp0"
 
-echo FishBuddy build
+echo BPSR Fishing Bot build
 echo.
 
 python --version >nul 2>&1 || (echo [ERROR] Python not found on PATH. & exit /b 1)
@@ -23,7 +23,7 @@ echo Building with PyInstaller...
 python -m PyInstaller fishbuddy.spec --clean --noconfirm || (echo [ERROR] Build failed. See output above. & exit /b 1)
 
 echo.
-echo Build complete: %CD%\dist\FishBuddy\
+echo Build complete: %CD%\dist\BPSR-Fishing-Bot\
 echo Next: run installer\fishbuddy.iss with Inno Setup 6+
 echo.
 
