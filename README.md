@@ -1,176 +1,221 @@
-<p align="right">
-  <a href="./README.md">English</a> |
-  <a href="./README.pt-BR.md">Português (Brasil)</a>
-</p>
-
 <p align="left">
-    <a href="#"><img alt="Build Status" src="https://github.com/your-username/BPSR-Fishing-Bot/actions/workflows/main.yml/badge.svg"></a>
-    <a href="#"><img alt="Project Version" src="https://img.shields.io/badge/version-1.0.0-blue"></a>
-    <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPL--3.0-brightgreen"></a>
-    <a href="https://www.python.org"><img alt="Python" src="https://img.shields.io/badge/Python-3.8+-3776AB?logo=python"></a>
-    <a href="https://opencv.org"><img alt="OpenCV" src="https://img.shields.io/badge/OpenCV-4.x-5C3EE8?logo=opencv"></a>
+  <a href="#"><img alt="Version" src="https://img.shields.io/badge/version-1.0.0-blue"></a>
+  <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPL--3.0-brightgreen"></a>
+  <a href="https://www.python.org"><img alt="Python" src="https://img.shields.io/badge/Python-3.9+-3776AB?logo=python"></a>
 </p>
 
-# BPSR Fishing Bot
+# 🎣 FishBuddy — Automated Fishing for Blue Protocol: Star Resonance
 
-> Forked from [hyuse98/BPSR-Fishing-Bot](https://github.com/hyuse98/BPSR-Fishing-Bot) with these additions:
+FishBuddy watches your screen, detects fish bites, and plays the fishing minigame for you — completely hands-free. Cast once, walk away, come back to a full inventory.
+
+> 📸 *Screenshot / GIF coming soon*
+
+**What it does:**
+- Casts your line, waits for a bite, and plays the arrow minigame automatically
+- Monitors the Tension bar via OCR and releases at the right moment to prevent escapes
+- Swaps broken rods automatically so fishing never stops
+- Runs quietly in the background — control it with function keys, no window-switching needed
+
+---
+
+## ⬇️ Download & Install
+
+### Step 1 — Download
+
+Go to the [**Releases page**](../../releases/latest) and download the latest `FishBuddy-Setup-x.x.x.exe`.
+
+### Step 2 — Install (5 clicks)
+
+1. Double-click the downloaded installer
+2. Click **Next** on the welcome screen
+3. Choose an install location (the default is fine)
+4. Click **Install**
+5. Click **Finish** — a desktop shortcut is created automatically
+
+> ### 🛡️ Windows shows a security warning?
 >
-> *   **Tension management** — OCR-based detection of "Tension XX%" overlay; releases mouse at ≥ 90% to prevent fish escapes
-> *   **Auto-buy bait/rods** — new BUYING state with full shop flow (WIP)
-> *   **Detector improvements** — HSV tuning, windowed scaling, NaN/inf handling, JPG screenshots
-> *   **Minigame tuning** — improved arrow handling, idle detection, timing tweaks
-> *   **Logging** — rotating file logger and stats via logger
-> *   **Updated templates** — no_rod, continue, success, fish_size
-
-An automated and open-source fishing bot built in Python. It uses image detection to identify on-screen events and interact with a game's fishing minigame, automating the entire process.
-
----
-
-## Table of Contents
-
-*   [Features](#features)
-*   [Quick Start Guide](#quick-start-guide)
-    *   [Prerequisites](#1-prerequisites)
-    *   [Installation](#2-installation)
-    *   [How to Run](#3-how-to-run)
-*   [Known Issues and Solutions](#known-issues-and-solutions)
-*   [Configuration](#configuration)
-*   [For Developers](#for-developers)
-    *   [Architecture](#architecture)
-    *   [Project Structure](#project-structure)
-*   [Future Plans](#future-plans)
+> This is normal for unsigned software. Windows SmartScreen may say *"Windows protected your PC"*.
+>
+> **To run it anyway:**
+> 1. Click **More info** (under the warning text)
+> 2. Click **Run anyway**
+>
+> If Windows Defender quarantines the file, see [Troubleshooting](#-troubleshooting) below.
 
 ---
 
-## Features
+## 🚀 Quick Start
 
-*   **Fully Automated Fishing:** Casts the line, detects a bite, and starts the minigame.
-*   **Smart Minigame Player:** Autonomously plays the fishing minigame, moving left and right as needed.
-*   **Automatic Rod Swapping:** Detects when the fishing rod breaks and replaces it with a new one, allowing for uninterrupted fishing sessions.
-*   **Hotkey Control:** Easily start, pause, resume, and stop the bot using hotkeys ('7' and '8' keys).
-*   **Flexible Configuration:** Allows for easy adjustment of detection precision, regions of interest (ROI), and wait times through dedicated configuration files.
-*   **Robust Architecture:** Built with a state machine and solid design principles, making the code easy to understand and extend.
+1. **Open Blue Protocol: Star Resonance** and go to a fishing spot
+2. Make sure the game window is visible (not minimised)
+3. **Launch FishBuddy** from your desktop shortcut or Start Menu
+4. Press **F6** to start fishing
+5. Press **F8** at any time to stop immediately
 
----
+That's it. FishBuddy takes over from there.
 
-## Quick Start Guide
+### ⌨️ Hotkeys
 
-### 1. Prerequisites
+| Key | Action |
+|-----|--------|
+| **F6** | Start / Stop the bot |
+| **F7** | Pause / Resume |
+| **F8** | Emergency stop — halts all actions immediately |
+| **F9** | Toggle debug mode (extra logging) |
+| **F10** | Burst screenshot mode — captures every detection frame |
+| **F11** | ROI visualiser — shows detection regions on screen |
 
-*   **Python 3.8+**
-*   The game configured to run in full-screen mode at **1920x1080** resolution.
-
-### 2. Installation
-
-1.  Clone this repository:
-    ```bash
-    git clone https://github.com/your-username/BPSR-Fishing-Bot.git
-    cd BPSR-Fishing-Bot
-    ```
-
-2.  Install the dependencies from `requirements.txt`:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-### 3. How to Run
-
-1.  Open the game and make sure it is visible on the screen.
-2.  Be at a fishing location. Either stand on an interactable fishing spot or already in the fishing UI.
-2.  Run the bot from the project's root folder:
-    ```bash
-    python main.py
-    ```
-3.  The bot will be ready. Press **7** key to start/pause and **8** key in-game or in the terminal to stop the bot at any time.
-4.  Press **0** at any time to toggle burst screenshots (captures every detection frame). This mode has priority over the regular debug screenshot interval.
+> Hotkeys work globally — you don't need to click on FishBuddy's window first.  
+> All keys can be changed in the config file (see [Settings](#️-settings)).
 
 ---
 
-## Known Issues and Solutions
+## ⚙️ Settings
 
-This section lists common issues you might encounter and how to solve them.
+FishBuddy is configured through a plain-text file. You don't need to edit it to get started — the defaults work for most players.
 
-### The detection of an item (e.g., broken rod, fish bite) stops working
+### Finding your config file
 
-*   **Symptom:** The bot stops reacting to a specific event that used to work, such as not swapping a broken rod or not detecting a bite.
-*   **Likely Cause:** The game may have received a minor visual update, changing the appearance of the icon or image the bot is looking for.
-*   **Solution:**
-    1.  **Take a new screenshot** of the failed image (e.g., the broken rod icon).
-    2.  **Replace the corresponding template file** in the `src/fishbot/assets/templates/` folder.
-    3.  If the problem persists, try **adjusting the `precision` value** in the `src/fishbot/config/detection_config.py` file. Lowering the value (e.g., from `0.8` to `0.7`) can help compensate for minor visual differences.
+| Scenario | Config file location |
+|----------|---------------------|
+| Installed (normal) | `%LOCALAPPDATA%\FishBuddy\config.toml` |
+| Portable / next to the .exe | `config.toml` (same folder as `FishBuddy.exe`) |
 
-### Character won't resume fishing after a timeout state
+**To open the config file:**
+1. Press `Win + R`, type `%LOCALAPPDATA%\FishBuddy`, press Enter
+2. Open `config.toml` with any text editor (Notepad works fine)
 
-*   **Symptom:** Something unexpected occurred (like fish escaped) and the bot has escaped the fishing UI and won't start again.
-*   **Cause:** When the bot escapes it tries to re-enter the fishing UI by interacting with the fishing spot. Because some spots move the player after interacting with the fishing spot, the bot idly tries to interact when nothing is there. Bot also does not support a search to find the nearest one.
-*   **Solution:** Move your character over to an interactable fishing spot to resume the bot.
+> The file is created on first launch. If it doesn't exist yet, run FishBuddy once.
+
+### Key settings
+
+| Setting | Section | Default | What it does |
+|---------|---------|---------|-------------|
+| `start_stop` | `[hotkeys]` | `"f6"` | Key to start/stop the bot |
+| `pause` | `[hotkeys]` | `"f7"` | Key to pause/resume |
+| `emergency_stop` | `[hotkeys]` | `"f8"` | Key for immediate stop |
+| `anti_detection` | `[behavior]` | `true` | Adds human-like random delays and mouse jitter |
+| `casting_delay` | `[behavior]` | `0.5` | Seconds to wait before each cast |
+| `debug_mode` | `[behavior]` | `false` | Show extra info in the log window |
+| `target_fps` | `[behavior]` | `0` | Detection loop speed (0 = unlimited; try 20 to save CPU) |
+| `precision` | `[detection]` | `0.65` | How confident the bot must be to recognise a game element (0.0–1.0) |
+| `game_window_title` | `[screen]` | `"Blue Protocol: Star Resonance"` | Window title used to locate the game |
+| `tesseract_path` | `[ocr]` | `"auto"` | Path to Tesseract OCR (auto-detected in release builds) |
+
+**Example — change the start/stop key to F2:**
+```toml
+[hotkeys]
+start_stop = "f2"
+```
+
+Your config file only needs the settings you want to change — everything else stays at its default automatically.
+
+### Resetting to defaults
+
+Delete (or rename) your `config.toml` file and restart FishBuddy. It will regenerate with all default values.
 
 ---
 
-## Configuration
+## ❓ Troubleshooting
 
-The bot's behavior can be adjusted through the files located in `src/fishbot/config/`.
-
-#### `screen_config.py`
-Defines the screen capture area.
-*   `monitor_width`, `monitor_height`: The game's screen resolution (default: 1920x1080).
-*   `monitor_x`, `monitor_y`: Coordinates of the top-left corner of the monitor where the game is running. For the primary monitor, keep this as `(0, 0)`.
-
-#### `detection_config.py`
-Controls image detection.
-*   `precision`: The minimum confidence (from `0.0` to `1.0`) for a template to be considered a match.
-*   `templates`: Maps event names to their corresponding image files in `src/fishbot/assets/templates/`.
-*   `rois` (Regions of Interest): Defines rectangles `(x, y, width, height)` to limit the search area for each template, increasing performance and accuracy.
-
-#### `bot_config.py`
-General bot settings.
-*   `state_timeouts`: Maximum time the bot can remain in each state before resetting.
-*   `target_fps`: Target frames per second for screen captures (0 for unlimited).
-*   `default_delay`: Default delays between actions.
-*   `casting_delay`: Delay right before casting a bait. 
+| Problem | Likely cause | Solution |
+|---------|-------------|----------|
+| *"Game window not found"* error | Game isn't running or window title differs | Make sure Blue Protocol is open and **not** minimised. If you use a non-English client, set `game_window_title` in config to the exact window title. |
+| Bot starts but never casts | Game is running at the wrong resolution | Set the game to **1920×1080** in its Graphics settings. Windowed and borderless modes are both supported. |
+| Windows Defender removed the file | Defender flagged the executable | Open **Windows Security → Virus & threat protection → Protection history**, find the item, and click **Restore**. Then add an exclusion for the FishBuddy folder. |
+| Bot doesn't detect fish bites | Game had a visual update and templates no longer match | Lower `precision` in config from `0.65` to `0.55`. If it still fails, open an [issue](../../issues) so templates can be updated. |
+| Hotkeys don't respond | Another application is capturing the same keys | Change the conflicting hotkeys in your `config.toml` (see Settings above). FishBuddy uses Win32 and does **not** require administrator rights. |
+| Bot gets stuck after fish escapes | Character walked away from the fishing spot | Move your character back to an interactable fishing spot — the bot will resume automatically. |
+| OCR / Tension bar not working | Tesseract not found | In release builds Tesseract is bundled automatically. If you're running from source, install it from [UB-Mannheim's release page](https://github.com/UB-Mannheim/tesseract/wiki) and set `tesseract_path` in config. |
+| High CPU usage | Detection loop running uncapped | Set `target_fps = 20` in the `[behavior]` section of your config. |
 
 ---
 
-## For Developers
+## 🔧 For Developers
+
+<details>
+<summary>Click to expand developer instructions</summary>
+
+### Running from source
+
+**Requirements:** Python 3.9+, Git
+
+```bash
+git clone https://github.com/your-username/BPSR-Fishing-Bot.git
+cd BPSR-Fishing-Bot
+pip install -r requirements.txt
+python main.py
+```
+
+Install [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki) separately when running from source (not bundled in the repo). Set `tesseract_path` in `config.toml` if auto-detection fails.
+
+### Building the release
+
+```bash
+# 1. Install dev dependencies
+pip install pyinstaller
+
+# 2. Build the onedir bundle
+build.bat        # or: pyinstaller fishbuddy.spec
+
+# 3. Package into installer
+# Open fishbuddy_installer.iss in Inno Setup and click Build
+```
+
+The output installer is placed in `dist/Output/`.
 
 ### Architecture
 
-The bot uses a **Finite State Machine (FSM)** to manage its workflow. The logic is divided as follows:
+FishBuddy is built on a **Finite State Machine (FSM)**:
 
-*   **`main.py`**: The entry point that initializes and runs the bot.
-*   **`src/fishbot/core/state/`**: Contains the state machine logic.
-    *   `state_machine.py`: Manages the current state and transitions.
-    *   `impl/`: Houses the classes for each concrete state (`CheckingRodState`, `PlayingMinigameState`, etc.), where each implements a single responsibility.
-*   **`src/fishbot/core/game/`**: Modules that interact directly with the game.
-    *   `detector.py`: Responsible for screen capture and template detection using `mss` and `OpenCV`.
-    *   `controller.py`: Simulates keyboard and mouse inputs.
-*   **`src/fishbot/utils/`**: Utility modules, such as the logger function.
+```
+STARTING → CHECKING_ROD → CASTING_BAIT → WAITING_FOR_BITE
+                ↑                               ↓
+           FINISHING ←── PLAYING_MINIGAME ──────┘
+```
 
-### Project Structure
+Key modules:
+
+| Module | Responsibility |
+|--------|---------------|
+| `main.py` | Entry point; wires up hotkeys and starts the FSM loop |
+| `src/fishbot/core/state/` | State machine + individual state classes |
+| `src/fishbot/core/game/detector.py` | Screen capture (`mss`) + template matching (`OpenCV`) |
+| `src/fishbot/core/game/controller.py` | Keyboard/mouse simulation (`PyAutoGUI`) |
+| `src/fishbot/config/config_manager.py` | TOML loading, deep-merge, Pydantic v2 validation |
+| `src/fishbot/utils/` | Rotating file logger, stats |
+
+### Project structure
 
 ```
 BPSR-Fishing-Bot/
-├── src/
-│   └── fishbot/
-│       ├── assets/         # Images (templates) for detection
-│       ├── config/         # Bot configuration files
-│       ├── core/
-│       │   ├── game/       # Game interaction modules (Detector, Controller)
-│       │   └── state/      # State Machine Logic
-│       ├── ui/             # (Reserved for a future GUI)
-│       └── utils/          # Utility modules
-├── .gitignore
-├── main.py                 # Application entry point
-├── README.md
-└── requirements.txt
+├── src/fishbot/
+│   ├── assets/templates/   # PNG templates for OpenCV matching
+│   ├── config/             # config_manager.py + default_config.toml
+│   │   ├── core/
+│   │   ├── game/           # Detector, Controller
+│   │   └── state/          # FSM + state implementations
+│   └── utils/              # Logger
+├── main.py
+├── requirements.txt
+├── pyproject.toml
+└── README.md
 ```
 
-## Future Plans
+### Contributing
 
-*   [ ] Graphical user interface (GUI) for easier configuration.
-*   [x] Hotkey system to start/stop the bot.
-*   [ ] Improve resilience to unexpected in-game events.
+1. Fork the repo and create a feature branch
+2. Run existing tests before making changes
+3. Keep PRs focused — one feature or fix per PR
+4. Open an issue first for large changes so we can discuss the approach
+
+</details>
 
 ---
 
-Feel free to open an *issue* or submit a *pull request*!
+## ⚠️ Disclaimer
+
+- FishBuddy may violate Blue Protocol: Star Resonance's Terms of Service. **Use at your own risk.**
+- The authors are not responsible for any account suspension or other consequences.
+- This software is provided **as-is**, with no warranty of any kind.
+- This project is not affiliated with or endorsed by Bandai Namco or Amazon Games.

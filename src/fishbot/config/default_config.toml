@@ -1,0 +1,234 @@
+# FishBuddy Configuration
+# =======================
+# You can create your own config file to override any of these settings.
+#
+# Where to place your config file:
+#   Windows (installed): %LOCALAPPDATA%\FishBuddy\config.toml
+#   Portable mode:       config.toml  (same folder as the app)
+#
+# Your config only needs to contain the settings you want to change.
+# All other settings keep their defaults automatically.
+# =======================
+
+
+# ─────────────────────────────────────────────
+# Hotkeys
+# ─────────────────────────────────────────────
+[hotkeys]
+
+# Key to start and stop the bot
+start_stop = "f9"
+
+# Key to pause and resume the bot
+pause = "f10"
+
+# Emergency stop - immediately halts all actions
+emergency_stop = "f11"
+
+
+# ─────────────────────────────────────────────
+# Bot Behavior
+# ─────────────────────────────────────────────
+[behavior]
+
+# Master toggle for anti-detection features (random delays, mouse jitter)
+# Disable only if you are testing locally and do not need humanlike input
+anti_detection = true
+
+# Maximum random pixel offset applied to mouse movements (+-N pixels)
+mouse_jitter = 3
+
+# Random timing variance added to all delays (0.2 = +-20%)
+delay_variance = 0.2
+
+# Random variance applied specifically to cast timing (0.15 = +-15%)
+casting_delay_variance = 0.15
+
+# Time (in seconds) to wait before casting
+casting_delay = 0.5
+
+# Enable a faster finish animation after completing the minigame
+quick_finish_enabled = false
+
+# Show extra debug information in the log
+debug_mode = false
+
+# Target frames per second for the detection loop (0 = unlimited)
+# Lower values reduce CPU usage. Recommended: 15-30 for normal use.
+target_fps = 0
+
+
+# ─────────────────────────────────────────────
+# State Timeouts
+# ─────────────────────────────────────────────
+# How long (in seconds) each bot state may run before being
+# considered stuck and restarted.
+[behavior.state_timeouts]
+
+starting         = 10
+checking_rod     = 15
+casting_bait     = 15
+waiting_for_bite = 25
+playing_minigame = 65
+finishing        = 10
+buying           = 30
+
+
+# ─────────────────────────────────────────────
+# Auto-Buy
+# ─────────────────────────────────────────────
+[behavior.auto_buy]
+
+# Automatically open the shop and buy more supplies when they run out
+enabled = false
+
+# How many items to buy in a single purchase
+quantity = 20
+
+# Which bait type to buy: "cheap" or "special"
+bait_type = "cheap"
+
+
+# ─────────────────────────────────────────────
+# Image Detection
+# ─────────────────────────────────────────────
+[detection]
+
+# How confident the bot must be before accepting a template match (0.0-1.0).
+# Lower = more lenient (more false positives).
+# Higher = more strict (may miss valid matches).
+# Default 0.65 works well for most setups.
+precision = 0.65
+
+# Per-template precision overrides (optional).
+# Add entries here to tighten or loosen thresholds for specific templates.
+# Example:
+#   [detection.precision_overrides]
+#   fishing_spot_btn = 0.80
+[detection.precision_overrides]
+
+
+# ─────────────────────────────────────────────
+# Template Image Files
+# ─────────────────────────────────────────────
+# Maps internal names to filenames inside the assets/templates folder.
+# Only change these if you rename or replace template images.
+[detection.templates]
+
+fishing_spot_btn    = "fishing_spot_btn.png"
+reg_rod             = "reg_pole.png"
+sturdy_rod          = "sturdy_pole.png"
+flex_rod            = "flex_pole.png"
+broken_rod          = "broken_rod.png"
+no_rod              = "no_rod.png"
+exclamation         = "exclamation.png"
+left_arrow          = "left_arrow.png"
+right_arrow         = "right_arrow.png"
+failure             = "fish_escaped.png"
+success             = "success.png"
+continue            = "continue.png"
+level_check         = "level_check.png"
+connect_server      = "connect.png"
+shop_icon           = "shop_icon.png"
+shop_rod_tab        = "shop_rod_tab.png"
+shop_bait_tab       = "shop_bait_tab.png"
+shop_bait_cheap_tab = "shop_bait_cheap_tab.png"
+shop_quantity       = "shop_quantity.png"
+shop_buy_btn        = "shop_buy_btn.png"
+shop_ok_btn         = "shop_ok_btn.png"
+shop_confirm        = "shop_confirm.png"
+shop_close          = "shop_close.png"
+empty_bait_slot     = "empty_bait_slot.png"
+
+
+# ─────────────────────────────────────────────
+# Color-Match Templates
+# ─────────────────────────────────────────────
+# Templates that use HSV color masking instead of grayscale matching.
+# Values: [hue_low, sat_low, val_low, hue_high, sat_high, val_high]
+[detection.color_match_templates]
+
+left_arrow  = [0, 30, 80, 30, 255, 255]
+right_arrow = [0, 30, 80, 30, 255, 255]
+
+
+# ─────────────────────────────────────────────
+# Regions of Interest (ROIs)
+# ─────────────────────────────────────────────
+# Bounding boxes [x, y, width, height] in 1920x1080 reference coordinates.
+# Adjust these if UI elements appear in different positions on your screen.
+[detection.rois]
+
+fishing_spot_btn    = [1400, 540,  121,  55]
+reg_rod             = [1598, 970,  290,  63]
+sturdy_rod          = [1597, 969,  274,  67]
+flex_rod            = [1597, 969,  284,  66]
+broken_rod          = [1597, 969,  284,  66]
+no_rod              = [1536, 978,  352,  70]
+exclamation         = [ 929, 438,   52, 142]
+left_arrow          = [ 740, 490,  170, 100]
+right_arrow         = [1010, 490,  170, 100]
+failure             = [ 973, 630,  702, 101]
+success             = [1422, 924,  337, 106]
+continue            = [1422, 924,  337, 106]
+level_check         = [1101, 985,   48,  29]
+connect_server      = [1057, 763,  279,  67]
+shop_icon           = [ 400, 200, 1120, 680]
+shop_rod_tab        = [ 400, 200,  600, 400]
+shop_bait_tab       = [ 400, 200,  600, 400]
+shop_bait_cheap_tab = [ 400, 200,  600, 400]
+shop_quantity       = [ 700, 400,  500, 200]
+shop_buy_btn        = [ 800, 600,  400, 200]
+shop_ok_btn         = [ 700, 400,  500, 200]
+shop_confirm        = [ 700, 400,  500, 300]
+shop_close          = [1200, 150,  200, 100]
+empty_bait_slot     = [1300, 950,  150,  80]
+tension_bar         = [1000, 820,  320,  60]
+
+
+# ─────────────────────────────────────────────
+# Screen / Window Settings
+# ─────────────────────────────────────────────
+[screen]
+
+# The window title used to locate the game on screen.
+# The bot looks for a window whose title contains this string.
+game_window_title = "Blue Protocol: Star Resonance"
+
+# Reference resolution that all ROI coordinates are based on.
+# Do not change unless you have recaptured all templates at a different resolution.
+reference_width  = 1920
+reference_height = 1080
+
+
+# ─────────────────────────────────────────────
+# Windowed Mode Offsets
+# ─────────────────────────────────────────────
+# Pixel adjustments to compensate for OS window decorations when the game
+# runs in windowed (non-fullscreen) mode.
+# Applied only when the game window is not positioned at (0, 0).
+[screen.windowed_offsets]
+
+top    = 32
+left   = 8
+width  = 16
+height = 39
+
+
+# ─────────────────────────────────────────────
+# OCR / Tesseract
+# ─────────────────────────────────────────────
+[ocr]
+
+# Enable OCR-based tension bar reading during the minigame.
+# Requires Tesseract to be installed (see tesseract_path below).
+enabled = true
+
+# Path to the Tesseract executable.
+# "auto" = the bot searches common install locations automatically.
+#
+# If auto-detection fails, set an explicit path, for example:
+#   tesseract_path = "C:\Program Files\Tesseract-OCR\tesseract.exe"
+#
+# Install Tesseract from: https://github.com/UB-Mannheim/tesseract/wiki
+tesseract_path = "auto"
