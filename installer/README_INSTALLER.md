@@ -1,4 +1,4 @@
-# Building the FishBuddy Installer
+# Building the BPSR Fishing Bot Installer
 
 **Requirements:** Python 3.9+, Inno Setup 6.3+ (https://jrsoftware.org/isdl.php)
 
@@ -8,13 +8,13 @@
 build.bat
 ```
 
-Produces `dist\FishBuddy\`.
+Produces `dist\BPSR-Fishing-Bot\`.
 
 ## Step 2 -- Compile the installer
 
 Open `installer\fishbuddy.iss` in the Inno Setup IDE and press **F9**.
 
-Output: `installer\Output\FishBuddy-Setup-1.0.0.exe`
+Output: `installer\Output\BPSR-Fishing-Bot-Setup-1.0.0.exe`
 
 **Command line alternative:**
 ```bat

@@ -1,13 +1,13 @@
-; fishbuddy.iss -- Inno Setup 6+ installer for FishBuddy
-; Prerequisites: run build.bat first to produce ..\dist\FishBuddy\
+; fishbuddy.iss -- Inno Setup 6+ installer for BPSR Fishing Bot
+; Prerequisites: run build.bat first to produce ..\dist\BPSR-Fishing-Bot\
 ; Compile: open in Inno Setup IDE and press F9, or: ISCC.exe fishbuddy.iss
 
 #define AppVersion "1.0.0"
-#define AppName    "FishBuddy"
+#define AppName    "BPSR Fishing Bot"
 #define AppPublisher "BPSR"
 #define AppURL       "https://github.com/DanielKispert/BPSR-Fishing-Bot"
 #define AppSupportURL "https://github.com/DanielKispert/BPSR-Fishing-Bot/issues"
-#define AppExeName "FishBuddy.exe"
+#define AppExeName "BPSR-Fishing-Bot.exe"
 
 [Setup]
 AppName={#AppName}
@@ -25,18 +25,18 @@ MinVersion=10.0
 DisableDirPage=no
 DisableProgramGroupPage=no
 OutputDir=Output
-OutputBaseFilename=FishBuddy-Setup-{#AppVersion}
+OutputBaseFilename=BPSR-Fishing-Bot-Setup-{#AppVersion}
 Compression=lzma2/ultra64
 SolidCompression=yes
 InternalCompressLevel=ultra64
 WizardStyle=modern
 ShowLanguageDialog=no
 ; SetupIconFile=fishbuddy.ico
-; UninstallDisplayIcon={app}\FishBuddy.exe
+; UninstallDisplayIcon={app}\BPSR-Fishing-Bot.exe
 ; LicenseFile=..\LICENSE.rtf
 AlwaysRestart=no
 CloseApplications=yes
-CloseApplicationsFilter=FishBuddy.exe
+CloseApplicationsFilter=BPSR-Fishing-Bot.exe
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -46,7 +46,7 @@ Name: "desktopicon";   Description: "Create a &desktop shortcut";    GroupDescri
 Name: "startmenuicon"; Description: "Create a &Start Menu shortcut"; GroupDescription: "Additional shortcuts:"; Flags: checkedonce
 
 [Files]
-Source: "..\dist\FishBuddy\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\BPSR-Fishing-Bot\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#AppName}";           Filename: "{app}\{#AppExeName}"
@@ -62,7 +62,7 @@ begin
   if CurUninstallStep = usPostUninstall then
   begin
     if MsgBox(
-      'Delete your saved FishBuddy settings?' + #13#10 +
+    'Delete your saved BPSR Fishing Bot settings?' + #13#10 +
       '(' + ExpandConstant('{localappdata}\{#AppName}\config.toml') + ')' + #13#10#13#10 +
       'Yes = remove settings. No = keep them.',
       mbConfirmation, MB_YESNO) = IDYES then

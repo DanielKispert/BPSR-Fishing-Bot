@@ -1,4 +1,4 @@
-# FishBuddy defaults -- place config.toml in %LOCALAPPDATA%\FishBuddy\ to override
+# BPSR Fishing Bot defaults -- place config.toml in %LOCALAPPDATA%\BPSR-Fishing-Bot\ to override
 
 [behavior]
 anti_detection = true        # random delays + mouse jitter
