@@ -1,6 +1,6 @@
-; fishbuddy.iss -- Inno Setup 6+ installer for BPSR Fishing Bot
+; bpsr-fishing-bot.iss -- Inno Setup 6+ installer for BPSR Fishing Bot
 ; Prerequisites: run build.bat first to produce ..\dist\BPSR-Fishing-Bot\
-; Compile: open in Inno Setup IDE and press F9, or: ISCC.exe fishbuddy.iss
+; Compile: open in Inno Setup IDE and press F9, or: ISCC.exe bpsr-fishing-bot.iss
 
 #define AppVersion "1.0.0"
 #define AppName    "BPSR Fishing Bot"
@@ -31,7 +31,7 @@ SolidCompression=yes
 InternalCompressLevel=ultra64
 WizardStyle=modern
 ShowLanguageDialog=no
-; SetupIconFile=fishbuddy.ico
+; SetupIconFile=bpsr-fishing-bot.ico
 ; UninstallDisplayIcon={app}\BPSR-Fishing-Bot.exe
 ; LicenseFile=..\LICENSE.rtf
 AlwaysRestart=no
