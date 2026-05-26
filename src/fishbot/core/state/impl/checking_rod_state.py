@@ -22,6 +22,7 @@ class CheckingRodState(BotState):
             # Fast-path: detect the "Add a pole" empty slot
             if self._detect_no_rod(screen):
                 self.bot.log("[CHECKING_ROD] ⚠️  No rod equipped! Adding...")
+                self.bot.stats.increment('rod_breaks')
                 return self._replace_rod()
 
             # Retry with fresh captures if no rod found (fishing UI may still be loading)
@@ -38,7 +39,6 @@ class CheckingRodState(BotState):
 
         if not found_rod:
             self.bot.log("[CHECKING_ROD] ⚠️  Rod undetectable after retries. Replacing...")
-            self.bot.stats.increment('rod_breaks')
             return self._replace_rod()
 
         if self.bot.sleep_or_stop(1):

@@ -40,12 +40,13 @@ if IS_WINDOWS:
         ]
 
     _user32 = ctypes.windll.user32
+    _kernel32 = ctypes.windll.kernel32
     _user32.RegisterHotKey.restype     = wintypes.BOOL
     _user32.UnregisterHotKey.restype   = wintypes.BOOL
-    _user32.GetMessage.restype         = wintypes.BOOL
+    _user32.GetMessageW.restype         = wintypes.BOOL
     _user32.PostQuitMessage.restype    = None
     _user32.PostThreadMessageW.restype = wintypes.BOOL
-    _user32.GetCurrentThreadId.restype = wintypes.DWORD
+    _kernel32.GetCurrentThreadId.restype = wintypes.DWORD
 
 else:
     try:
@@ -176,7 +177,7 @@ class NativeHotkeys:
 
     def _run_win32(self) -> None:
         """Win32 RegisterHotKey + GetMessage loop. Unregisters all keys on exit."""
-        self._win32_thread_id = _user32.GetCurrentThreadId()
+        self._win32_thread_id = _kernel32.GetCurrentThreadId()
 
         registered_ids: List[int] = []
         for action, key_name in self._key_bindings.items():
@@ -200,7 +201,7 @@ class NativeHotkeys:
         while True:
             if self._stop_event.is_set():
                 break
-            result = _user32.GetMessage(ctypes.byref(msg), None, 0, 0)
+            result = _user32.GetMessageW(ctypes.byref(msg), None, 0, 0)
             if result <= 0:
                 break
             if msg.message == WM_HOTKEY:

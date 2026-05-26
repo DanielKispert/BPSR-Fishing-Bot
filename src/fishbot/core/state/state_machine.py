@@ -71,10 +71,13 @@ class StateMachine:
             screen = self.bot.detector.capture_screen()
             if self.bot.detector.find(screen, "success"):
                 log("[TIMEOUT] ✅ Success screen detected! Going to FINISHING.")
+                self.bot.stats.increment('fish_caught')
                 if not self.bot.sleep_or_stop(1):
                     self.set_state(StateType.FINISHING, force=True)
             else:
                 log("[TIMEOUT] 🔄 No success screen, going to CHECKING_ROD.")
+                self.bot.stats.increment('fish_escaped')
+                self.bot.stats.increment('cycles')
                 if not self.bot.sleep_or_stop(2):
                     self.set_state(StateType.CHECKING_ROD, force=True)
         else:

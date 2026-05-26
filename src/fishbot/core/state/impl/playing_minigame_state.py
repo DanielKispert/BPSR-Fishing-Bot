@@ -101,6 +101,7 @@ class PlayingMinigameState(BotState):
                     failed = True
                     self.bot.log('[MINIGAME] ❌ Fish escaped (idle UI detected)')
                     self.bot.stats.increment('fish_escaped')
+                    self.bot.stats.increment('cycles')
 
         if fish_complete:
             self.controller.release_all_controls()
