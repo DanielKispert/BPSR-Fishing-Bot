@@ -81,9 +81,7 @@ class StateMachine:
                 if not self.bot.sleep_or_stop(2):
                     self.set_state(StateType.CHECKING_ROD, force=True)
         else:
-            log("[TIMEOUT] 🚨 Pressing 'ESC' to reset.")
-            if not self.bot.is_stopped():
-                self.bot.controller.press_key('esc')
+            log("[TIMEOUT] 🔄 Going to STARTING.")
             if not self.bot.sleep_or_stop(0.5):
                 self.set_state(StateType.STARTING, force=True)
 

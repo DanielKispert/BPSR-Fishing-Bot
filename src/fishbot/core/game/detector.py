@@ -18,7 +18,7 @@ except ImportError:
 try:
     import pytesseract
 except ImportError:
-    log("[ERROR] ❌ pytesseract not found! Install with: pip install pytesseract")
+    log("[WARN] ⚠️ pytesseract not installed — tension detection disabled. Install with: pip install pytesseract")
     pytesseract = None
 
 
@@ -29,7 +29,7 @@ class Detector:
     SCREENSHOT_PARAMS = [cv.IMWRITE_JPEG_QUALITY, 100]
 
     # Base scales - the dynamic reciprocal scale is added after first capture
-    MATCH_SCALES_BASE = [1.6, 0.8, 1.0, 1.2]
+    MATCH_SCALES_BASE = [1.6, 0.8, 1.0, 1.2, 0.6, 0.5]
 
     def __init__(self, config):
         self.unified_config = config
@@ -139,10 +139,12 @@ class Detector:
                 log(f"[INFO] ⚠️ DPI mismatch detected! pywinctl={self.screen_config.monitor_width}x{self.screen_config.monitor_height}, "
                     f"actual capture={self._actual_width}x{self._actual_height}")
 
-            # Add dynamic scale: reciprocal of capture scale (for games where UI doesn't scale)
+            # Add dynamic scales based on actual capture resolution
             reciprocal = round(1.0 / self._scale_x, 2)
-            if reciprocal not in self._match_scales:
-                self._match_scales.insert(0, reciprocal)  # Highest priority
+            direct_scale = round(self._scale_x, 2)
+            for s in [reciprocal, direct_scale]:
+                if s not in self._match_scales:
+                    self._match_scales.insert(0, s)
             log(f"[INFO] 📐 Match scales: {self._match_scales}")
 
         # Burst capture has priority and saves every detection frame.

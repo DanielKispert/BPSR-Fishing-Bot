@@ -20,6 +20,7 @@ build/
 dist/
 *.egg-info/
 pip-wheel-metadata/
+installer/Output/
 
 # IDE / Editor directories
 # JetBrains IDEs (PyCharm, IntelliJ, etc.)
