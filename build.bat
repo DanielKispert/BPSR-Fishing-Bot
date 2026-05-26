@@ -20,11 +20,11 @@ python -m pip install "pyinstaller>=5.13,<7.0" --quiet || (echo [ERROR] PyInstal
 echo [OK] Dependencies ready
 
 echo Building with PyInstaller...
-python -m PyInstaller fishbuddy.spec --clean --noconfirm || (echo [ERROR] Build failed. See output above. & exit /b 1)
+python -m PyInstaller bpsr-fishing-bot.spec --clean --noconfirm || (echo [ERROR] Build failed. See output above. & exit /b 1)
 
 echo.
 echo Build complete: %CD%\dist\BPSR-Fishing-Bot\
-echo Next: run installer\fishbuddy.iss with Inno Setup 6+
+echo Next: run installer\bpsr-fishing-bot.iss with Inno Setup 6+
 echo.
 
 endlocal

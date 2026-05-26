@@ -193,7 +193,7 @@ BPSR-Fishing-Bot/
 ├── installer/                      # Inno Setup scripts
 ├── .gitignore
 ├── build.bat                       # PyInstaller build script
-├── fishbuddy.spec
+├── bpsr-fishing-bot.spec
 ├── main.py                         # Application entry point
 ├── pyproject.toml
 └── README.md

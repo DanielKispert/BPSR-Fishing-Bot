@@ -12,15 +12,15 @@ Produces `dist\BPSR-Fishing-Bot\`.
 
 ## Step 2 -- Compile the installer
 
-Open `installer\fishbuddy.iss` in the Inno Setup IDE and press **F9**.
+Open `installer\bpsr-fishing-bot.iss` in the Inno Setup IDE and press **F9**.
 
 Output: `installer\Output\BPSR-Fishing-Bot-Setup-1.0.0.exe`
 
 **Command line alternative:**
 ```bat
-"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\fishbuddy.iss
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\bpsr-fishing-bot.iss
 ```
 
 ## Updating the version
 
-Change `#define AppVersion "1.0.0"` in `fishbuddy.iss`.
+Change `#define AppVersion "1.0.0"` in `bpsr-fishing-bot.iss`.
