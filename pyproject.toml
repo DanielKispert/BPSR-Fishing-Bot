@@ -30,7 +30,7 @@ dev = [
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 # PyInstaller packaging is driven by bpsr-fishing-bot.spec; see bpsr-fishing-bot.spec for build config.
 # To build the release bundle, run:
