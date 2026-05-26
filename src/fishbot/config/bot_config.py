@@ -9,7 +9,6 @@ class BotConfig:
         self.detection = DetectionConfig()
 
         self.state_timeouts = {
-            StateType.STARTING: 10,
             StateType.CHECKING_ROD: 15,
             StateType.CASTING_BAIT: 15,
             StateType.WAITING_FOR_BITE: 25,
