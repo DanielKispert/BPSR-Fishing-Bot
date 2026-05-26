@@ -21,6 +21,8 @@
 
 An automated and open-source fishing bot built in Python. It uses image detection to identify on-screen events and interact with a game's fishing minigame, automating the entire process.
 
+> ⚠️ **You must run the bot as Administrator.** Without admin privileges, keyboard/mouse inputs will not reach the game and hotkeys may not work when the game is in focus.
+
 ---
 
 ## Table of Contents
