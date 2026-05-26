@@ -1,6 +1,7 @@
 import cv2 as cv
 import math
 import re
+import sys
 import numpy as np
 import time
 from pathlib import Path
@@ -54,10 +55,13 @@ class Detector:
         self._scale_cache = {}
         self._match_scales = list(self.MATCH_SCALES_BASE)
 
-        # Screenshot capture for debugging - use CWD-relative path for portability
+        # Screenshot capture for debugging
         self._last_screenshot_time = 0
         self._screenshot_sequence = 0
-        self._screenshot_dir = Path.cwd() / "logs" / "screenshots"
+        if getattr(sys, 'frozen', False):
+            self._screenshot_dir = Path(sys.executable).parent / "logs" / "screenshots"
+        else:
+            self._screenshot_dir = Path.cwd() / "logs" / "screenshots"
         if self._screenshot_dir.exists():
             for f in self._screenshot_dir.glob(f"*{self.SCREENSHOT_EXT}"):
                 f.unlink()

@@ -1,11 +1,15 @@
 import logging
 import os
 import re
+import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-# Log directory: project_root/logs/
-_LOG_DIR = Path(__file__).resolve().parent.parent.parent.parent / "logs"
+# Log directory: next to exe (frozen) or project_root/logs/ (dev)
+if getattr(sys, 'frozen', False):
+    _LOG_DIR = Path(sys.executable).parent / "logs"
+else:
+    _LOG_DIR = Path(__file__).resolve().parent.parent.parent.parent / "logs"
 _LOG_DIR.mkdir(exist_ok=True)
 
 # --- Level detection from message prefix ---

@@ -2,9 +2,9 @@
 ; Prerequisites: run build.bat first to produce ..\dist\BPSR-Fishing-Bot\
 ; Compile: open in Inno Setup IDE and press F9, or: ISCC.exe bpsr-fishing-bot.iss
 
-#define AppVersion "1.0.0"
+#define AppVersion "0.1.0"
 #define AppName    "BPSR Fishing Bot"
-#define AppPublisher "BPSR"
+#define AppPublisher "https://github.com/DanielKispert/"
 #define AppURL       "https://github.com/DanielKispert/BPSR-Fishing-Bot"
 #define AppSupportURL "https://github.com/DanielKispert/BPSR-Fishing-Bot/issues"
 #define AppExeName "BPSR-Fishing-Bot.exe"
