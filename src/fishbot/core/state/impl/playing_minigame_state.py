@@ -50,7 +50,7 @@ class PlayingMinigameState(BotState):
             self.controller.key_up(key_to_release)
             # Micro-pause between key release and press (human-like)
             if self.bot.config.bot.anti_detection:
-                time.sleep(random.uniform(0.02, 0.06))
+                self.bot.sleep_or_stop(random.uniform(0.02, 0.06))
         else:
             self.bot.log(f"[MINIGAME] ▶️ Moving {direction} (Holding '{key_to_press}')")
 

@@ -1,3 +1,5 @@
+import time
+
 from ..bot_state import BotState
 from ..state_type import StateType
 from src.fishbot.config.detection_config import ROD_TEMPLATES
@@ -8,43 +10,68 @@ class CheckingRodState(BotState):
     MAX_RETRIES = 3
     RETRY_DELAY = 1.5
 
+    def __init__(self, bot):
+        super().__init__(bot)
+        self._phase = "init"
+        self._wait_until = None
+        self._retry_count = 0
+
+    def on_enter(self):
+        self._phase = "init"
+        self._wait_until = time.time() + 1.0
+        self._retry_count = 0
+
     def handle(self, screen):
-        self.bot.log("[CHECKING_ROD] Checking rod...")
-        if self.bot.sleep_or_stop(1):
-            return StateType.CHECKING_ROD
+        now = time.time()
 
-        # Capture fresh screen - the one passed in may be stale from state transition
-        screen = self.detector.capture_screen()
+        # Non-blocking wait phases
+        if self._wait_until is not None:
+            if now < self._wait_until:
+                return StateType.CHECKING_ROD
+            self._wait_until = None
 
-        found_rod = self._detect_any_rod(screen)
+        if self._phase == "init":
+            self.bot.log("[CHECKING_ROD] Checking rod...")
+            screen = self.detector.capture_screen()
 
-        if not found_rod:
-            # Fast-path: detect the "Add a pole" empty slot
+            if self._detect_any_rod(screen):
+                self.bot.log("[CHECKING_ROD] ✅ Rod OK")
+                self._phase = "done_wait"
+                self._wait_until = now + 1.0
+                return StateType.CHECKING_ROD
+
             if self._detect_no_rod(screen):
                 self.bot.log("[CHECKING_ROD] ⚠️  No rod equipped! Adding...")
                 self.bot.stats.increment('rod_breaks')
                 return self._replace_rod()
 
-            # Retry with fresh captures if no rod found (fishing UI may still be loading)
-            for attempt in range(1, self.MAX_RETRIES + 1):
-                if self.bot.is_stopped():
-                    return StateType.CHECKING_ROD
-                self.bot.log(f"[CHECKING_ROD] Rod not detected (attempt {attempt}/{self.MAX_RETRIES}), retrying...")
-                if self.bot.sleep_or_stop(self.RETRY_DELAY):
-                    return StateType.CHECKING_ROD
-                screen = self.detector.capture_screen()
-                found_rod = self._detect_any_rod(screen)
-                if found_rod:
-                    break
-
-        if not found_rod:
-            self.bot.log("[CHECKING_ROD] ⚠️  Rod undetectable after retries. Replacing...")
-            return self._replace_rod()
-
-        if self.bot.sleep_or_stop(1):
+            self._phase = "retrying"
+            self._retry_count = 0
+            self._wait_until = now + self.RETRY_DELAY
             return StateType.CHECKING_ROD
-        self.bot.log("[CHECKING_ROD] ✅ Rod OK")
-        return StateType.CASTING_BAIT
+
+        if self._phase == "retrying":
+            self._retry_count += 1
+            self.bot.log(f"[CHECKING_ROD] Rod not detected (attempt {self._retry_count}/{self.MAX_RETRIES}), retrying...")
+            screen = self.detector.capture_screen()
+
+            if self._detect_any_rod(screen):
+                self.bot.log("[CHECKING_ROD] ✅ Rod OK")
+                self._phase = "done_wait"
+                self._wait_until = now + 1.0
+                return StateType.CHECKING_ROD
+
+            if self._retry_count >= self.MAX_RETRIES:
+                self.bot.log("[CHECKING_ROD] ⚠️  Rod undetectable after retries. Replacing...")
+                return self._replace_rod()
+
+            self._wait_until = now + self.RETRY_DELAY
+            return StateType.CHECKING_ROD
+
+        if self._phase == "done_wait":
+            return StateType.CASTING_BAIT
+
+        return StateType.CHECKING_ROD
 
     def _replace_rod(self):
         """Equip a rod via the M-menu. If no rod available, trigger auto-buy."""

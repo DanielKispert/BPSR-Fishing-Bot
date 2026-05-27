@@ -8,7 +8,7 @@ import threading
 from typing import Callable, Dict, List, Optional
 
 from src.fishbot.utils.logger import log
-from src.fishbot.utils.roi_visualizer import main as show_roi_visualizer
+from src.fishbot.utils.region_overlay import show_overlay
 
 IS_WINDOWS: bool = sys.platform == "win32"
 _HAS_KEYBOARD_LIB: bool = False
@@ -59,7 +59,7 @@ else:
 class NativeHotkeys:
     """Admin-free hotkey manager using Win32 RegisterHotKey (Windows) or keyboard lib fallback.
 
-    F6=start, F7=pause, F8=emergency stop, F9=start+debug, F10=burst screenshots, F11=ROI visualiser.
+    F6=start, F7=pause, F8=emergency stop, F9=start+debug, F10=burst screenshots, F11=region+ROI overlay.
     Keys are configurable via hotkeys_config dict passed to __init__.
     """
 
@@ -68,7 +68,7 @@ class NativeHotkeys:
     _ID_STOP:         int = 3
     _ID_START_DEBUG:  int = 4
     _ID_BURST:        int = 5
-    _ID_VISUALIZER:   int = 6
+    _ID_OVERLAY:      int = 6
 
     def __init__(self, bot, hotkeys_config: Optional[Dict[str, str]] = None) -> None:
         """Init hotkeys. hotkeys_config maps action names to key strings (e.g. {'stop': 'F12'})."""
@@ -87,7 +87,7 @@ class NativeHotkeys:
             'stop':        cfg.get('stop',        'F8'),
             'start_debug': cfg.get('start_debug', 'F9'),
             'burst':       cfg.get('burst',       'F10'),
-            'visualizer':  cfg.get('visualizer',  'F11'),
+            'overlay':     cfg.get('overlay',     'F11'),
         }
 
         self._action_to_id: Dict[str, int] = {
@@ -96,7 +96,7 @@ class NativeHotkeys:
             'stop':        self._ID_STOP,
             'start_debug': self._ID_START_DEBUG,
             'burst':       self._ID_BURST,
-            'visualizer':  self._ID_VISUALIZER,
+            'overlay':     self._ID_OVERLAY,
         }
 
         self._id_to_callback: Dict[int, Callable[[], None]] = {
@@ -105,7 +105,7 @@ class NativeHotkeys:
             self._ID_STOP:         self._action_stop,
             self._ID_START_DEBUG:  self._action_start_debug,
             self._ID_BURST:        self._action_toggle_burst,
-            self._ID_VISUALIZER:   self._action_toggle_visualizer,
+            self._ID_OVERLAY:      self._action_show_overlay,
         }
 
         self._thread = threading.Thread(target=self._run, name='HotkeyThread', daemon=True)
@@ -142,19 +142,6 @@ class NativeHotkeys:
         if IS_WINDOWS:
             _user32.PostQuitMessage(0)
 
-    def _action_toggle_visualizer(self) -> None:
-        """F11 -- Open or close the ROI visualiser subprocess."""
-        if self.visualizer_process and self.visualizer_process.is_alive():
-            log("[HOTKEY] \U0001f5fa Closing ROI visualiser.")
-            self.visualizer_process.terminate()
-            self.visualizer_process = None
-        else:
-            log("[HOTKEY] \U0001f5fa Opening ROI visualiser.")
-            self.visualizer_process = multiprocessing.Process(
-                target=show_roi_visualizer, daemon=True
-            )
-            self.visualizer_process.start()
-
     def _action_toggle_burst(self) -> None:
         """F10 -- Toggle burst screenshot capture."""
         self.bot.detector.burst_screenshots_enabled = (
@@ -162,6 +149,24 @@ class NativeHotkeys:
         )
         state = "ENABLED" if self.bot.detector.burst_screenshots_enabled else "DISABLED"
         log("[HOTKEY] \U0001f4f8\u26a1 Burst screenshots %s." % state)
+
+    def _action_show_overlay(self) -> None:
+        """F11 -- Open combined region selector + ROI overlay."""
+        was_paused = self.paused
+        self.paused = True
+        log("[HOTKEY] 🗺️ Opening region + ROI overlay...")
+        screen_cfg = self.bot.config.bot.screen
+        detection_cfg = self.bot.config.bot.detection
+        confirmed, x, y, w, h = show_overlay(screen_cfg, detection_cfg)
+        if confirmed:
+            screen_cfg.monitor_x = x
+            screen_cfg.monitor_y = y
+            screen_cfg.monitor_width = w
+            screen_cfg.monitor_height = h
+            log(f"[HOTKEY] ✅ Capture region updated: {w}x{h} @ ({x}, {y})")
+        else:
+            log("[HOTKEY] ❌ Region selection cancelled.")
+        self.paused = was_paused
 
     def _run(self) -> None:
         """Dispatch to the platform-appropriate hotkey backend."""

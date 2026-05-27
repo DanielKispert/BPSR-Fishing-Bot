@@ -19,6 +19,7 @@ class FinishingState(BotState):
             return StateType.CHECKING_ROD
 
         if self.detector.find(screen, "fishing_spot_btn", 1, debug=False):
+            self.bot.stats.increment("cycles")
             return StateType.STARTING
 
         return StateType.FINISHING

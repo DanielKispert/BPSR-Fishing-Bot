@@ -67,8 +67,8 @@ class Detector:
                 f.unlink()
         self._screenshot_dir.mkdir(parents=True, exist_ok=True)
         self._max_screenshots = 1000
-        self.screenshots_enabled = False  # Toggled via hotkey '6'
-        self.burst_screenshots_enabled = False  # Toggled via hotkey '0' and takes priority
+        self.screenshots_enabled = False  # Toggled via F9
+        self.burst_screenshots_enabled = False  # Toggled via F10
         self.screenshot_interval = 1.0  # Seconds between debug screenshots (adjusted per state)
         log(f"[INFO] 📸 Screenshots will be saved to: {self._screenshot_dir}")
 
@@ -103,12 +103,19 @@ class Detector:
                 continue
 
             img = cv.imread(str(path), cv.IMREAD_UNCHANGED)
+            if img is None:
+                log(f"[INFO] ❌ {name} - failed to load (corrupt or unreadable)")
+                continue
+
             template_img, mask = None, None
 
-            if img.shape[2] == 4:
+            if len(img.shape) == 3 and img.shape[2] == 4:
                 log(f"[INFO] ✅ {name} (with transparency mask)")
                 mask = img[:, :, 3]
                 template_img = cv.cvtColor(img, cv.COLOR_BGRA2BGR)
+            elif len(img.shape) == 2:
+                log(f"[INFO] ✅ {name} (grayscale)")
+                template_img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
             else:
                 log(f"[INFO] ✅ {name}")
                 template_img = img
@@ -136,7 +143,7 @@ class Detector:
             log(f"[INFO] 📐 Scale factors: x={self._scale_x:.3f}, y={self._scale_y:.3f}")
 
             if self._actual_width != self.screen_config.monitor_width:
-                log(f"[INFO] ⚠️ DPI mismatch detected! pywinctl={self.screen_config.monitor_width}x{self.screen_config.monitor_height}, "
+                log(f"[INFO] ⚠️ Resolution mismatch! config={self.screen_config.monitor_width}x{self.screen_config.monitor_height}, "
                     f"actual capture={self._actual_width}x{self._actual_height}")
 
             # Add dynamic scales based on actual capture resolution
@@ -298,16 +305,9 @@ class Detector:
     def _calculate_center_native(self, location, scaled_template_shape, nat_offset_x, nat_offset_y):
         """Calculate click position from a match found in native pixel space."""
         scaled_h, scaled_w = scaled_template_shape
-
-        # Center of match in native capture pixels
-        center_nat_x = nat_offset_x + location[0] + scaled_w // 2
-        center_nat_y = nat_offset_y + location[1] + scaled_h // 2
-
-        # Convert from capture pixels to screen (logical) pixels
-        screen_x = int(center_nat_x / self._actual_width * self.screen_config.monitor_width) + self.screen_config.monitor_x
-        screen_y = int(center_nat_y / self._actual_height * self.screen_config.monitor_height) + self.screen_config.monitor_y
-
-        return (screen_x, screen_y)
+        center_x = nat_offset_x + location[0] + scaled_w // 2 + self.screen_config.monitor_x
+        center_y = nat_offset_y + location[1] + scaled_h // 2 + self.screen_config.monitor_y
+        return (center_x, center_y)
 
     def find(self, screen, template_name, radius=0, debug=False):
         if template_name not in self.templates:

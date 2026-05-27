@@ -1,5 +1,5 @@
 <p align="left">
-    <a href="#"><img alt="Project Version" src="https://img.shields.io/badge/version-0.1.1-blue"></a>
+    <a href="#"><img alt="Project Version" src="https://img.shields.io/badge/version-0.1.2-blue"></a>
     <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPL--3.0-brightgreen"></a>
     <a href="https://www.python.org"><img alt="Python" src="https://img.shields.io/badge/Python-3.9+-3776AB?logo=python"></a>
     <a href="https://opencv.org"><img alt="OpenCV" src="https://img.shields.io/badge/OpenCV-4.x-5C3EE8?logo=opencv"></a>
@@ -15,7 +15,9 @@
 > *   **Minigame tuning** — improved arrow handling, idle detection, timing tweaks
 > *   **Logging** — rotating file logger and stats via logger
 > *   **Updated templates** — no_rod, continue, success, fish_size
-> *   **Global hotkeys** — F6–F11 control the bot from any window
+> *   **Region & ROI overlay** — F11 opens a draggable/resizable capture region with live ROI visualization
+> *   **Pure Win32 window detection** — DPI-aware, multi-monitor, fullscreen & windowed support
+> *   **Global hotkeys** — F6–F11 control the bot from any window (no admin for hotkeys)
 > *   **TOML configuration** — persistent user settings via `%LOCALAPPDATA%\BPSR-Fishing-Bot\config.toml`
 > *   **Installer** — packaged as a Windows installer (`BPSR-Fishing-Bot-Setup-x.x.x.exe`) for end users
 
@@ -48,6 +50,8 @@ An automated and open-source fishing bot built in Python. It uses image detectio
 *   **Tension Management:** Monitors the "Tension XX%" overlay via OCR; releases mouse at ≥ 90% to prevent fish escapes.
 *   **Automatic Rod Swapping:** Detects when the fishing rod breaks and replaces it, allowing for uninterrupted fishing sessions.
 *   **Global Hotkey Control:** Start, pause, resume, and stop the bot from any window using F6–F11.
+*   **Region & ROI Overlay (F11):** Draggable/resizable capture region with live ROI visualization — adjust exactly what the bot sees without restarting.
+*   **Multi-Resolution Support:** Auto-detects game window (windowed or fullscreen, any monitor) with DPI-aware scaling. Works on 720p, 1080p, 1440p, and 4K.
  *   **Persistent Configuration:** User settings stored in `%LOCALAPPDATA%\BPSR-Fishing-Bot\config.toml` — survive updates.
 *   **Robust Architecture:** Built with a state machine and solid design principles, making the code easy to understand and extend.
 
@@ -58,7 +62,7 @@ An automated and open-source fishing bot built in Python. It uses image detectio
 ### 1. Prerequisites
 
 *   **Python 3.9+** (for running from source)
-*   The game configured to run in full-screen mode at **1920x1080** resolution.
+*   The game configured to run in full-screen or windowed mode. The bot auto-detects the game window at any resolution.
 
 ### 2. Installation
 
@@ -100,7 +104,7 @@ An automated and open-source fishing bot built in Python. It uses image detectio
 | **F8** | Emergency stop |
 | **F9** | Start in debug mode (saves detection screenshots) |
 | **F10** | Toggle burst screenshots (captures every detection frame) |
-| **F11** | Toggle ROI visualiser |
+| **F11** | Region & ROI overlay (adjust capture area + see detection zones) |
 
 ---
 
@@ -207,7 +211,7 @@ BPSR-Fishing-Bot/
 *   [x] Hotkey system to start/stop the bot.
 *   [ ] Configurable hotkeys via `config.toml`.
 *   [ ] Improve resilience to unexpected in-game events.
-*   [ ] Multi-resolution support (beyond 1920×1080).
+*   [x] Multi-resolution support (auto-detect, DPI-aware, any monitor).
 
 ---
 

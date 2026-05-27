@@ -1,7 +1,7 @@
 [project]
 # Install: pip install -e .    Dev: pip install -e ".[dev]"
 name = "bpsr-fishing-bot"
-version = "0.1.1"
+version = "0.1.2"
 description = "Automated fishing bot for Blue Protocol: Star Resonance"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -13,7 +13,6 @@ dependencies = [
     "PyAutoGUI~=0.9.54",
     "PyQt6~=6.10.0",
     "pyqt6-sip>=13.6",
-    "pywinctl>=0.4",
     "pydantic>=2.0,<3.0",
     "tomli>=2.0; python_version < '3.11'",
     "pynput>=1.7,<2.0",

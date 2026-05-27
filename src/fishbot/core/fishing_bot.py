@@ -55,8 +55,9 @@ class FishingBot:
         log("[INFO] ⚠️ IMPORTANT: Keep the game in FOCUS (active window)")
         log(f"[INFO] ⚙️ Accuracy: {self.config.bot.detection.precision * 100:.0f}%")
         log(f"[INFO] ⚙️ Target FPS: {'MAX' if self.config.bot.target_fps == 0 else self.config.bot.target_fps}")
+
         log("[INFO] ⚠️ Warming up detection system...")
-        self.sleep_or_stop(1)  # Allows enough time for the screen capture components to initialize
+        self.sleep_or_stop(1)
         self.state_machine.set_state(StateType.STARTING)
 
     def update(self):
