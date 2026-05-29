@@ -11,7 +11,8 @@ from src.fishbot.config.detection_config import ROD_TEMPLATES
 class PlayingMinigameState(BotState):
 
     IDLE_CHECK_DELAY = 20  # Only check for idle UI after this many seconds
-    TENSION_THRESHOLD = 80  # Release mouse when tension exceeds this percentage
+    TENSION_THRESHOLD = 100
+    TENSION_SUSTAIN_SECONDS = 1.0  # How long tension must stay at threshold before releasing
     TENSION_CHECK_INTERVAL = 2  # OCR every 2nd frame for performance
 
     def __init__(self, bot):
@@ -20,6 +21,7 @@ class PlayingMinigameState(BotState):
         self._minigame_start = None
         self._retry_until = None
         self._tension_release_until = None
+        self._tension_full_since = None
         self._frame_counter = 0
 
     def on_enter(self):
@@ -27,6 +29,7 @@ class PlayingMinigameState(BotState):
         self._minigame_start = None
         self._retry_until = None
         self._tension_release_until = None
+        self._tension_full_since = None
         self._frame_counter = 0
 
     def _handle_arrow(self, direction, screen):
@@ -136,9 +139,15 @@ class PlayingMinigameState(BotState):
         elif self._frame_counter % self.TENSION_CHECK_INTERVAL == 0:
             tension = self.detector.read_tension_percent(screen)
             if tension is not None and tension >= self.TENSION_THRESHOLD:
-                self.bot.state_machine.notify_activity()
-                self.bot.log(f"[MINIGAME] ⚠️ Tension {tension}% — releasing mouse")
-                self.controller.mouse_up('left')
-                self._tension_release_until = now + 1.0
+                if self._tension_full_since is None:
+                    self._tension_full_since = now
+                elif now - self._tension_full_since >= self.TENSION_SUSTAIN_SECONDS:
+                    self.bot.state_machine.notify_activity()
+                    self.bot.log(f"[MINIGAME] ⚠️ Tension {tension}% sustained for {self.TENSION_SUSTAIN_SECONDS}s — releasing mouse")
+                    self.controller.mouse_up('left')
+                    self._tension_release_until = now + 1.0
+                    self._tension_full_since = None
+            else:
+                self._tension_full_since = None
 
         return StateType.PLAYING_MINIGAME
