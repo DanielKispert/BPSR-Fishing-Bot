@@ -23,4 +23,4 @@ Output: `installer\Output\BPSR-Fishing-Bot-Setup-1.0.0.exe`
 
 ## Updating the version
 
-Change `#define AppVersion "0.1.1"` in `bpsr-fishing-bot.iss`.
+Change `#define AppVersion "0.1.3"` in `bpsr-fishing-bot.iss`.

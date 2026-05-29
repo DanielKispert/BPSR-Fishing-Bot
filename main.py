@@ -26,7 +26,15 @@ def main():
     finally:
         hotkeys.shutdown()
 
-    log("[INFO] Bot finished.")
+    log("[INFO] Bot finished. Press any key to close (auto-close in 10s)...")
+    import time
+    import msvcrt
+    deadline = time.time() + 10
+    while time.time() < deadline:
+        if msvcrt.kbhit():
+            msvcrt.getch()
+            break
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":
