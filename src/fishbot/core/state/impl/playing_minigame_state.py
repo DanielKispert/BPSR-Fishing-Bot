@@ -5,9 +5,8 @@ import time
 from ..bot_state import BotState
 from ..state_type import StateType
 from src.fishbot.config.detection_config import ROD_TEMPLATES
-
-
-
+ 
+ 
 class PlayingMinigameState(BotState):
 
     IDLE_CHECK_DELAY = 20  # Only check for idle UI after this many seconds
@@ -31,8 +30,8 @@ class PlayingMinigameState(BotState):
 
     def _handle_arrow(self, direction, screen):
         arrow_template = f"{direction}_arrow"
-        key_to_press = 'a' if direction == 'left' else 'd'
-        key_to_release = 'd' if direction == 'left' else 'a'
+        key_to_press = self.controller.key_move_left if direction == 'left' else self.controller.key_move_right
+        key_to_release = self.controller.key_move_right if direction == 'left' else self.controller.key_move_left
 
         arrow_found = self.detector.find(screen, arrow_template, debug=True)
         if not arrow_found:
