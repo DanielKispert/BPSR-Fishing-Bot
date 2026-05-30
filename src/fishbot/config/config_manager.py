@@ -83,11 +83,23 @@ class OcrConfig(BaseModel):
     tesseract_path: str = "auto"
 
 
+class KeysConfig(BaseModel):
+    layout: str = "auto"
+
+    @field_validator("layout")
+    @classmethod
+    def _validate_layout(cls, v: str) -> str:
+        if v not in ("auto", "azerty", "qwerty"):
+            raise ValueError(f"layout must be 'auto', 'azerty', or 'qwerty', got: {v!r}")
+        return v
+
+
 class AppConfig(BaseModel):
     behavior: BehaviorConfig = Field(default_factory=BehaviorConfig)
     detection: DetectionTomlConfig = Field(default_factory=DetectionTomlConfig)
     screen: ScreenTomlConfig = Field(default_factory=ScreenTomlConfig)
     ocr: OcrConfig = Field(default_factory=OcrConfig)
+    keys: KeysConfig = Field(default_factory=KeysConfig)
 
 
 def _deep_merge(base: dict, override: dict) -> dict:

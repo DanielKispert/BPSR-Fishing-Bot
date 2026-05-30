@@ -100,3 +100,6 @@ height = 39
 [ocr]
 enabled = true
 tesseract_path = "auto"  # "auto" or explicit e.g. "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+
+[keys]
+layout = "auto"  # "auto" = detect at startup; override with "azerty" or "qwerty"

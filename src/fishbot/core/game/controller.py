@@ -7,13 +7,16 @@ from src.fishbot.utils.logger import log
 
 
 class GameController:
-    def __init__(self, config):
+    def __init__(self, config, game_keys: dict):
         self.config = config.bot
         auto.FAILSAFE = True
         auto.PAUSE = 0.05
         self.anti_detection = config.bot.anti_detection
         self.jitter_range = config.bot.mouse_jitter
         self.delay_variance = config.bot.delay_variance
+        self.key_move_left  = game_keys["move_left"]
+        self.key_move_right = game_keys["move_right"]
+        self.key_equip_menu = game_keys["equip_menu"]
 
     def _jitter(self, x, y):
         """Add random pixel offset to coordinates for anti-detection."""
@@ -77,8 +80,8 @@ class GameController:
         log("[CONTROLLER] ⚠️ Releasing all controls...")
         self.mouse_up('left')
         self.mouse_up('right')
-        self.key_up('a')
-        self.key_up('d')
+        self.key_up(self.key_move_left)
+        self.key_up(self.key_move_right)
 
     def click_at_reliable(self, x, y, bot, pre_delay=0.5, post_delay=0.5):
         """Move to position twice (to ensure landing), then click.

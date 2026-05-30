@@ -15,6 +15,8 @@ from src.fishbot.core.state.state_machine import StateMachine
 from src.fishbot.core.state.state_type import StateType
 from src.fishbot.core.stats import StatsTracker
 from src.fishbot.utils.logger import log
+from src.fishbot.config.config_manager import get_config
+from src.fishbot.utils.keyboard_layout import detect_layout, get_game_keys
 
 class FishingBot:
     def __init__(self):
@@ -22,8 +24,12 @@ class FishingBot:
         self.stats = StatsTracker()
         self.log = log
 
+        layout_setting = get_config().keys.layout
+        resolved_layout = detect_layout() if layout_setting == "auto" else layout_setting
+        game_keys = get_game_keys(resolved_layout)
+
         self.detector = Detector(self.config)
-        self.controller = GameController(self.config)
+        self.controller = GameController(self.config, game_keys)
         self.state_machine = StateMachine(self)
 
         self._stopped = False

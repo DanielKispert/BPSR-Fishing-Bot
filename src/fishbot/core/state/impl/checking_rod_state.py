@@ -74,11 +74,11 @@ class CheckingRodState(BotState):
         return StateType.CHECKING_ROD
 
     def _replace_rod(self):
-        """Equip a rod via the M-menu. If no rod available, trigger auto-buy."""
+        """Equip a rod via the equip menu key. If no rod available, trigger auto-buy."""
         if self.bot.sleep_or_stop(1):
             return StateType.CHECKING_ROD
 
-        self.controller.press_key('m')
+        self.controller.press_key(self.controller.key_equip_menu)
         if self.bot.sleep_or_stop(1):
             return StateType.CHECKING_ROD
 
@@ -90,7 +90,7 @@ class CheckingRodState(BotState):
             return StateType.CHECKING_ROD
 
         # Close menu
-        self.controller.press_key('m')
+        self.controller.press_key(self.controller.key_equip_menu)
         if self.bot.sleep_or_stop(0.5):
             return StateType.CHECKING_ROD
 
